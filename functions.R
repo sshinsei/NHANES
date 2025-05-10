@@ -3,6 +3,7 @@ library(survey)
 library(dplyr)
 library(ggplot2)
 library(knitr)
+library(rms)
 
 #### __________阈值效应分析__________ ####
 weighted_segmented_regression_nhanes <- function(data, 
@@ -488,4 +489,146 @@ if(F){
     return(result)
   }
   data2plot_spaced <- add_spacing_rows(data2plot)
+}
+
+
+rcs_threshold_analysis <- function(data, 
+                                 y_var,           
+                                 x_var,           
+                                 covariates,      
+                                 weight_var = "wt",
+                                 strata_var = "SDMVSTRA",
+                                 psu_var = "SDMVPSU",
+                                 nknots = 4) {
+  
+  # 1. 构建加权设计
+  design <- svydesign(
+    id = as.formula(paste0("~", psu_var)),
+    strata = as.formula(paste0("~", strata_var)),
+    weights = as.formula(paste0("~", weight_var)),
+    nest = TRUE,
+    data = data
+  )
+  
+  # 2. 准备数据
+  dd <- datadist(data)
+  options(datadist = "dd")
+  
+  # 3. 构建RCS模型公式
+  if(length(covariates) > 0) {
+    formula_str <- paste0(y_var, " ~ rcs(", x_var, ",", nknots, ") + ", 
+                         paste(covariates, collapse = " + "))
+  } else {
+    formula_str <- paste0(y_var, " ~ rcs(", x_var, ",", nknots, ")")
+  }
+  
+  # 内部函数：给定cutpoint计算logLik
+  get_loglik <- function(cutpoint) {
+    # 创建分段变量
+    data$x_split <- ifelse(data[[x_var]] <= cutpoint,
+                          data[[x_var]],
+                          cutpoint + (data[[x_var]] - cutpoint))
+    
+    design_tmp <- update(design, x_split = data$x_split)
+    
+    # 构建完整公式
+    if(length(covariates) > 0) {
+      full_formula <- paste(y_var, "~ x_split +", paste(covariates, collapse = " + "))
+    } else {
+      full_formula <- paste(y_var, "~ x_split")
+    }
+    
+    model_tmp <- svyglm(as.formula(full_formula), design = design_tmp, family = quasibinomial())
+    return(list(logLik = as.numeric(logLik(model_tmp)), model = model_tmp))
+  }
+  
+  # Step 1: 初筛5%-95%之间，每隔5%
+  quantiles_all <- quantile(data[[x_var]], probs = seq(0.05, 0.95, 0.05), na.rm = TRUE)
+  loglik_list <- lapply(quantiles_all, get_loglik)
+  loglik_values <- sapply(loglik_list, function(x) x$logLik)
+  best_idx <- which.max(loglik_values)
+  best_cut_init <- quantiles_all[best_idx]
+  
+  # Step 2: ±4%范围内缩小
+  refined_range <- quantile(data[[x_var]], 
+                           probs = seq(0.01 * (best_idx*5 - 4), 
+                                     0.01 * (best_idx*5 + 4), 
+                                     length.out = 3), 
+                           na.rm = TRUE)
+  
+  quartile_points <- quantile(refined_range, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+  loglik_q <- lapply(quartile_points, get_loglik)
+  loglik_q_vals <- sapply(loglik_q, function(x) x$logLik)
+  best_q_idx <- which.max(loglik_q_vals)
+  best_q <- quartile_points[best_q_idx]
+  
+  # Step 3: ±25%范围内再次递归缩小
+  final_range <- seq(
+    best_q - 0.25 * (best_q - min(refined_range)),
+    best_q + 0.25 * (max(refined_range) - best_q),
+    length.out = 3
+  )
+  loglik_final <- lapply(final_range, get_loglik)
+  loglik_final_vals <- sapply(loglik_final, function(x) x$logLik)
+  final_idx <- which.max(loglik_final_vals)
+  final_cut <- final_range[final_idx]
+  final_model <- loglik_final[[final_idx]]$model
+  
+  # 4. 拟合最终RCS模型
+  rcs_model <- svyglm(as.formula(formula_str), 
+                      design = design, 
+                      family = quasibinomial())
+  
+  # 5. 生成预测数据
+  x_range <- seq(min(data[[x_var]]), max(data[[x_var]]), length.out = 100)
+  pred_data <- data.frame(x = x_range)
+  names(pred_data)[1] <- x_var
+  
+  # 添加协变量的平均值或众数
+  for(cov in covariates) {
+    if(is.numeric(data[[cov]])) {
+      pred_data[[cov]] <- mean(data[[cov]], na.rm = TRUE)
+    } else {
+      pred_data[[cov]] <- names(which.max(table(data[[cov]])))
+    }
+  }
+  
+  # 6. 计算预测值
+  pred_data$pred <- predict(rcs_model, newdata = pred_data, type = "response")
+  
+  # 7. 创建结果表格
+  results_table <- data.frame(
+    "Inflection point" = c(paste0("≤", round(final_cut, 1)), 
+                          paste0(">", round(final_cut, 1)),
+                          "Log-likelihood ratio"),
+    "Adjusted OR (95% CI)" = c(
+      sprintf("%.2f (%.2f-%.2f)", 
+              exp(coef(final_model)["x_split"]),
+              exp(coef(final_model)["x_split"] - 1.96 * sqrt(vcov(final_model)["x_split", "x_split"])),
+              exp(coef(final_model)["x_split"] + 1.96 * sqrt(vcov(final_model)["x_split", "x_split"]))),
+      sprintf("%.2f (%.2f-%.2f)", 
+              exp(coef(final_model)["x_split"]),
+              exp(coef(final_model)["x_split"] - 1.96 * sqrt(vcov(final_model)["x_split", "x_split"])),
+              exp(coef(final_model)["x_split"] + 1.96 * sqrt(vcov(final_model)["x_split", "x_split"]))),
+      sprintf("%.3f", logLik(final_model)[1])
+    ),
+    "P-value" = c(
+      sprintf("%.3f", summary(final_model)$coefficients["x_split", "Pr(>|t|)"]),
+      sprintf("%.3f", summary(final_model)$coefficients["x_split", "Pr(>|t|)"]),
+      ""
+    )
+  )
+  
+  # 8. 打印结果
+  print(knitr::kable(results_table, 
+                     format = "pipe",
+                     caption = "RCS curve threshold analysis"))
+  
+  # 9. 返回结果
+  return(list(
+    table = results_table,
+    cutpoint = final_cut,
+    model = rcs_model,
+    pred_data = pred_data
+  ))
 }

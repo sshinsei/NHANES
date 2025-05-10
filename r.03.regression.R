@@ -273,8 +273,6 @@ cat("2. 非线性效应 P =", round(nonlin_test[2,"P"], 4), "\n") # 0.0507
 
 # -------------- 4. 阈值效应分析 -----------------
 
-
-
 # 使用函数
 covariates <- c("Age", "Race", "EDUcation", 
                 "PIR", "Gender", "Drink", "BMI", "Smoke", 
@@ -306,27 +304,21 @@ ggsave("segmented_regression_plot.png", p2, width = 8, height = 6, dpi = 300)
 ggsave("segmented_regression_plot.pdf", p2, width = 8, height = 6, dpi = 300)
 
 
-##### ________RCS添加拐点画图___________ #######
-p3 <- ggplot() +
-  geom_line(data=OR4, aes(x=RAR_log, y=yhat), 
-            linetype="solid", size=1, alpha=0.7,color="blue") +
-  geom_ribbon(data=OR4, aes(x=RAR_log, ymin=lower, ymax=upper), 
-              alpha=0.1, fill="grey") +
-  geom_hline(yintercept=1, linetype=2, color="grey") +
-  # 添加垂直线表示拐点
-  # geom_vline(xintercept = result$cutpoint, 
-  #            linetype = "dashed", 
-  #            color = "red",
-  #            alpha = 0.5) +
-  geom_text(aes(x = min(OR4$RAR_log)+0.1, y = max(OR4$yhat),
-                label = paste0("non-linear P =", round(nonlin_test[2,"P"], 4))))+
-  labs(x = "log(RAR)", y = "OR (95% CI)", 
-       title = " ") +
+##### ________平滑曲线添加拐点画图___________ #######
+
+p3 <- ggplot(new_dat, aes(x = RAR_log, y = predicted_prob)) +
+  geom_smooth(method = "loess", se = TRUE, color = "blue") +
+  labs(x = "RAR_log", y = "forcasted probe",
+       title = "") +
+  geom_vline(xintercept = rcs_result$cutpoint,
+             linetype = "dashed",
+             color = "red",
+             alpha = 0.5) +
+  labs(x = "log(RAR)", y = "OR (95% CI)") +
   theme_bw() +
-  theme(axis.line=element_line(),
-        panel.grid=element_blank(),
-        panel.border=element_blank(),
-        legend.position="bottom")
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+  
 p3
 # 保存图形
 ggsave("RCS_plot.pdf", p3, width = 8, height = 6, dpi = 300)
