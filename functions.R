@@ -5,6 +5,44 @@ library(ggplot2)
 library(knitr)
 library(rms)
 
+#### __________定义提取回归结果的函数__________ ####
+extract_regression_results <- function(model, model_name) {
+  # 捕获回归结果
+  reg_output <- capture.output(summary(model))
+  
+  # 提取系数表格部分
+  coef_lines <- reg_output[grep("^\\s*\\w+\\s+[-0-9.]+\\s+[-0-9.]+\\s+[-0-9.]+\\s+[-0-9.e]+", reg_output)]
+  
+  # 创建数据框
+  coef_df <- data.frame(
+    do.call(rbind, strsplit(trimws(coef_lines), "\\s+"))
+  )
+  names(coef_df) <- c("Variable", "Estimate", "Std. Error", "t value", "Pr(>|t|)")
+  # 保留前3行
+  coef_df <- coef_df[1:3, ]
+  # Estimate和Std. Error转为数值
+  coef_df$Estimate <- as.numeric(coef_df$Estimate)
+  coef_df$`Std. Error` <- as.numeric(coef_df$`Std. Error`)
+
+  # 计算OR
+  coef_df$OR <- exp(coef_df$Estimate)
+  coef_df$lower <- exp(coef_df$Estimate - 1.96 * coef_df$`Std. Error`)
+  coef_df$upper <- exp(coef_df$Estimate + 1.96 * coef_df$`Std. Error`)
+
+  # 保留三位小数
+  coef_df$OR <- round(coef_df$OR, 3)
+  coef_df$lower <- round(coef_df$lower, 3)
+  coef_df$upper <- round(coef_df$upper, 3)
+
+  # 保存为CSV
+  write.csv(coef_df, paste0("results_", model_name, ".csv"), row.names = FALSE)
+  
+  # 返回数据框
+  return(coef_df)
+}
+
+
+
 #### __________阈值效应分析__________ ####
 weighted_segmented_regression_nhanes <- function(data, 
                                                  y_var,           

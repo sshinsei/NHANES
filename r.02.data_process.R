@@ -332,9 +332,67 @@ write.csv(dat, "cleanData.csv")
 
 
 
-# 生成基线表------------------
-# install.packages("tableone")
+# 特征相对于MI的基线表------------------
 library(tableone)
+# install.packages(c("flextable","officer"))
+library(flextable)
+library(officer)
+
+# 定义变量
+vars <- c("Age", "Gender", "Race", "Marital", "EDUcation", "PIR", 
+          "BMI", "Smoke", "Drink", "hyptersion", "CHD", "Stroke", "lipids")
+
+# 定义分类变量
+catVars <- c("Age", "Gender", "Race", "Marital", "EDUcation", "PIR", 
+             "BMI", "Smoke", "Drink", "hyptersion", "CHD", "Stroke", "lipids")
+
+# 创建Table 1
+table1 <- CreateTableOne(vars = vars, 
+                        strata = "MI",  # 按MI分组
+                        data = dat, 
+                        factorVars = catVars)
+
+# 打印表格
+print(table1, 
+      nonnormal = vars,  # 所有变量都作为分类变量处理
+      showAllLevels = TRUE,  # 显示所有水平
+      formatOptions = list(big.mark = ","))
+
+# 将表格转换为flextable格式
+table1_flex <- print(table1, 
+                    nonnormal = vars,
+                    showAllLevels = TRUE,
+                    printToggle = TRUE,
+                    formatOptions = list(big.mark = ",")) %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "Characteristics") %>%
+  flextable() %>%
+  set_header_labels(
+    level = "Characteristics",
+    Overall = "Total (n = 12,689)",
+    `0` = "No (n = 10,964)",
+    `1` = "Yes (n = 1,725)",
+    test = "P value"
+  ) %>%
+  font(fontname = "Times New Roman", part = "all") %>%
+  fontsize(size = 10, part = "all") %>%
+  bold(part = "header") %>%
+  autofit() %>%
+  width(width = 1.5) %>%
+  align(align = "left", part = "all") %>%
+  align(align = "center", j = c(2:5), part = "all") %>%
+  border_outer() %>%
+  border_inner_h() %>%
+  border_inner_v()
+
+# 保存为Word文档
+doc <- read_docx()
+doc <- body_add_flextable(doc, table1_flex)
+print(doc, target = "Table1.docx")
+
+
+
+# 生成基线表------------------
 
 # 定义变量
 vars <- c("Drink", "Gender", "EDUcation", "Age", "Race", "Marital", "PIR", 
@@ -344,15 +402,11 @@ vars <- c("Drink", "Gender", "EDUcation", "Age", "Race", "Marital", "PIR",
 catVars <- c("Drink", "Gender", "EDUcation", "Age", "Race", "Marital", "PIR", 
              "BMI", "Smoke", "hyptersion", "CHD", "Stroke", "lipids")
 
-# 创建Table 1
-table1 <- CreateTableOne(vars = vars, 
+# 创建Table 2
+table2 <- CreateTableOne(vars = vars, 
                         data = dat, 
                         factorVars = catVars)
 
-# 打印表格
-print(table1, 
-      nonnormal = c("Drink", "Gender", "EDUcation",  
-                    "Age", "Race", "Marital", "PIR", "BMI",
-                    "Smoke", "hyptersion", "CHD", "Stroke"),  # 非正态分布的连续变量
-      showAllLevels = TRUE,  # 显示所有水平
-      formatOptions = list(big.mark = ","))
+
+
+

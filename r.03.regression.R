@@ -113,23 +113,32 @@ study_design <- svydesign(data=new_dat,
                           weights=~wt, nest=TRUE)
 
 
+
 #### 四分位数分组进行回归 ####
-BMI_mod1 <- svyglm(status~RAR_q4, study_design,family = quasibinomial)
-summary(BMI_mod1)
+mod1 <- svyglm(status~RAR_q4, study_design,family = quasibinomial)
+summary(mod1)
+results_mod1 <- extract_regression_results(mod1, "model1")
 
-
-BMI_mod2 <- svyglm(status~RAR_q4+Age+Race+Marital+
+mod2 <- svyglm(status~RAR_q4+Age+Race+Marital+
                          EDUcation+PIR+Gender, 
                    study_design,family = quasibinomial)
-summary(BMI_mod2)
+summary(mod2)
+results_mod2 <- extract_regression_results(mod2, "model2")
 
-
-BMI_mod3 <- svyglm(status~RAR_q4+
+mod3 <- svyglm(status~RAR_q4+
                    Age+Race+EDUcation+PIR+Gender+
                    Drink+BMI+Smoke+hyptersion+Stroke+lipids, 
                    study_design,family = quasibinomial)
-summary(BMI_mod3)
+summary(mod3)
+results_mod3 <- extract_regression_results(mod3, "model3")
 
+# 打印所有结果
+cat("\nModel 1 Results:\n")
+print(results_mod1)
+cat("\nModel 2 Results:\n")
+print(results_mod2)
+cat("\nModel 3 Results:\n")
+print(results_mod3)
 
 
 # -------------- 2. 平滑曲线拟合图 -----------------
@@ -148,13 +157,13 @@ model_vars <- c("RAR_log", "Age", "Race", "EDUcation",
 sapply(new_dat[, model_vars], function(x) sum(is.na(x)))
 
 # 全调整模型
-BMI_mod3 <- svyglm(status~RAR_q4+
+mod3 <- svyglm(status~RAR_q4+
                    Age+Race+EDUcation+PIR+Gender+
                    Drink+BMI+Smoke+hyptersion+Stroke+lipids, 
                    study_design,family = quasibinomial)
 
 # 预测概率
-new_dat$predicted_prob <- predict(BMI_mod3, newdata = new_dat, type = "response")
+new_dat$predicted_prob <- predict(mod3, newdata = new_dat, type = "response")
 
 library(ggplot2)
 
@@ -237,7 +246,7 @@ OR4 <- Predict(fit.rcs4, RAR_log, type="predictions", fun=exp, ref.zero=TRUE)
 OR5 <- Predict(fit.rcs5, RAR_log, type="predictions", fun=exp, ref.zero=TRUE)
 
 # 绘制三个模型的OR曲线比较
-p1 <- ggplot() +
+p <- ggplot() +
   geom_line(data=OR3, aes(x=RAR_log, y=yhat, color="3 knots"), 
             linetype="solid", size=1, alpha=0.7) +
   geom_line(data=OR4, aes(x=RAR_log, y=yhat, color="4 knots"), 
@@ -248,7 +257,7 @@ p1 <- ggplot() +
               alpha=0.1, fill="grey") +
   geom_hline(yintercept=1, linetype=2, color="grey") +
   scale_color_manual(values=c("3 knots"="#77bbdd", "4 knots"="#ff8899", "5 knots"="#ffdd88")) +
-  labs(x = "RAR", y = "OR (95% CI)", 
+  labs(x = "RAR_log", y = "OR (95% CI)", 
        title = "比较不同结点数的RCS模型",
        color = "结点数") +
   theme_bw() +
@@ -257,9 +266,7 @@ p1 <- ggplot() +
         panel.border=element_blank(),
         legend.position="bottom")
 
-p1
-
-
+p
 
 
 # 非线性检验解释
@@ -268,6 +275,31 @@ cat("\n非线性检验结果解释：\n")
 num <- as.numeric(dim(nonlin_test)[1])
 cat("1. 整体效应 P =", round(nonlin_test[num,"P"], 4), "\n")
 cat("2. 非线性效应 P =", round(nonlin_test[2,"P"], 4), "\n") # 0.0507
+
+
+# 保存最佳的RCS图
+# 绘制三个模型的OR曲线比较
+p1 <- ggplot() +
+  geom_line(data=OR4, aes(x=RAR_log, y=yhat,), 
+            linetype="solid", size=1, alpha=0.7,color="blue") +
+  geom_ribbon(data=OR4, aes(x=RAR_log, ymin=lower, ymax=upper), 
+              alpha=0.1, fill="grey") +
+  geom_hline(yintercept=1, linetype=2, color="grey") +
+  geom_text(aes(x=-1.25,y=7.5,
+                label = paste0("p for nonlinear = ",round(nonlin_test[2,"P"], 4))))+
+  labs(x = "RAR_log", y = "OR (95% CI)") +
+  theme_bw() +
+  theme(axis.line=element_line(),
+        panel.grid=element_blank(),
+        panel.border=element_blank(),
+        legend.position="bottom")
+
+p1
+ggsave("RCS_plot.pdf", p1, width = 8, height = 6, dpi = 300)
+ggsave("RCS_plot.png", p1, width = 8, height = 6, dpi = 300)
+
+
+
 
 
 
@@ -310,7 +342,7 @@ p3 <- ggplot(new_dat, aes(x = RAR_log, y = predicted_prob)) +
   geom_smooth(method = "loess", se = TRUE, color = "blue") +
   labs(x = "RAR_log", y = "forcasted probe",
        title = "") +
-  geom_vline(xintercept = rcs_result$cutpoint,
+  geom_vline(xintercept = result$cutpoint,
              linetype = "dashed",
              color = "red",
              alpha = 0.5) +
@@ -321,8 +353,8 @@ p3 <- ggplot(new_dat, aes(x = RAR_log, y = predicted_prob)) +
   
 p3
 # 保存图形
-ggsave("RCS_plot.pdf", p3, width = 8, height = 6, dpi = 300)
-ggsave("RCS_plot.png", p3, width = 8, height = 6, dpi = 300)
+ggsave("smooth_threshold.pdf", p3, width = 8, height = 6, dpi = 300)
+ggsave("smooth_threshold.png", p3, width = 8, height = 6, dpi = 300)
 
 
 
