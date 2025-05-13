@@ -147,7 +147,7 @@ weighted_segmented_regression_nhanes <- function(data,
   
   # 创建结果表格
   results_table <- data.frame(
-    "Inflection point" = c(paste0("≤", round(final_cut, 1)), 
+    "Inflection point" = c(paste0("<=", round(final_cut, 1)), 
                            paste0(">", round(final_cut, 1)),
                            "Log-likelihood ratio"),
     "Adjusted OR (95% CI)" = c(
@@ -185,7 +185,8 @@ weighted_segmented_regression_nhanes <- function(data,
 plot_segmented_fit <- function(data, x_var, y_var, cutpoint, covariates,
                                weight_var = "WTMEC2YR",
                                strata_var = "SDMVSTRA",
-                               psu_var = "SDMVPSU") {
+                               psu_var = "SDMVPSU",
+                               p_nonlinear = NULL) {
   
   # 创建分段变量
   data$x_below <- ifelse(data[[x_var]] <= cutpoint, data[[x_var]], cutpoint)
@@ -204,11 +205,14 @@ plot_segmented_fit <- function(data, x_var, y_var, cutpoint, covariates,
   formula_str <- paste0(y_var, " ~ x_below + x_above + ", 
                         paste(covariates, collapse = " + "))
   
-  # 拟合模型
-  # 1. logstic
-  # model <- svyglm(as.formula(formula_str), design = design, family = quasibinomial())
-  # 2. 线性
-  model <- svyglm(as.formula(formula_str), design = design)
+  # 根据p_nonlinear选择拟合方法
+  if(!is.null(p_nonlinear) && p_nonlinear < 0.05) {
+    # 非线性拟合
+    model <- svyglm(as.formula(formula_str), design = design, family = quasibinomial())
+  } else {
+    # 线性拟合
+    model <- svyglm(as.formula(formula_str), design = design)
+  }
   
   # 生成预测数据
   x_range <- seq(min(data[[x_var]]), max(data[[x_var]]), length.out = 100)
@@ -231,7 +235,7 @@ plot_segmented_fit <- function(data, x_var, y_var, cutpoint, covariates,
   pred_data$fit <- predict(model, newdata = pred_data, type = "response")
   
   # 绘图
-  ggplot() +
+  p <- ggplot() +
     # 添加原始数据点
     geom_point(data = data, 
                aes(x = .data[[x_var]], y = .data[[y_var]]),
@@ -245,10 +249,18 @@ plot_segmented_fit <- function(data, x_var, y_var, cutpoint, covariates,
                linetype = "dashed", 
                color = "red",
                alpha = 0.5) +
+    # 添加非线性检验P值标注
+    {if(!is.null(p_nonlinear)) 
+      geom_text(aes(x = min(data[[x_var]]), 
+                    y = max(pred_data$fit),
+                    label = sprintf("p for nonlinear = %.4f", p_nonlinear)),
+                hjust = 0, vjust = 1)} +
     # 设置标签
     labs(x = x_var,
          y = paste("Effect of", y_var),
-         title = "Segmented Regression Fit") +
+         title = ifelse(!is.null(p_nonlinear) && p_nonlinear < 0.05,
+                       "Nonlinear Segmented Regression Fit",
+                       "Linear Segmented Regression Fit")) +
     # 设置主题
     theme_minimal() +
     theme(
@@ -257,6 +269,8 @@ plot_segmented_fit <- function(data, x_var, y_var, cutpoint, covariates,
       axis.line = element_line(color = "black"),
       plot.title = element_text(hjust = 0.5)
     )
+  
+  return(p)
 }
 
 
@@ -281,11 +295,11 @@ perform_subgroup_analysis <- function(data,
   # 创建结果存储数据框
   results_df <- data.frame(
     Various = character(),
-    Estimate = character(),      # 改为character以保持格式
-    `Std. Error` = character(),  # 改为character以保持格式
-    `t value` = character(),     # 改为character以保持格式
-    `p value` = character(),     # 改为character以保持格式
-    `P for int` = character(),   # 新增交互作用P值列
+    Estimate = character(),      
+    `Std. Error` = character(),  
+    `t value` = character(),     
+    `p value` = character(),     
+    `P for int` = character(),   
     stringsAsFactors = FALSE
   )
   
@@ -302,29 +316,27 @@ perform_subgroup_analysis <- function(data,
   # 存储交互作用P值
   p_interaction <- NA
   
+  # 创建完整数据的survey design对象
+  options(survey.lonely.psu = "adjust")
+  full_design <- svydesign(
+    data = data,
+    id = as.formula(paste0("~", design_vars["id"])),
+    strata = as.formula(paste0("~", design_vars["strata"])),
+    weights = as.formula(paste0("~", design_vars["weights"])),
+    nest = TRUE
+  )
+  
   # 对每个分组水平进行分析
   for(level in group_levels) {
-    # 获取子组数据
-    sub_data <- subset(data, data[[group_var]] == level)
-    
-    # 创建survey design对象
-    options(survey.lonely.psu = "adjust")
-    sub_design <- try({
-      svydesign(
-        data = sub_data,
-        id = as.formula(paste0("~", design_vars["id"])),
-        strata = as.formula(paste0("~", design_vars["strata"])),
-        weights = as.formula(paste0("~", design_vars["weights"])),
-        nest = TRUE
-      )
-    })
-    
+    # 使用subset.survey.design获取子组设计
+    sub_design <- subset(full_design, data[[group_var]] == level)
+  
     # 构建模型公式
     formula_str <- paste0(outcome_vars[1], " ~ ", 
                           exposure_vars[1], " + ",
                           paste(covariates[covariates != group_var], 
                                 collapse = " + "))
-    
+  
     # 运行模型
     sub_model <- try({
       svyglm(
@@ -333,19 +345,19 @@ perform_subgroup_analysis <- function(data,
         family = family
       )
     })
-    
+  
     # 提取RAR的系数结果并格式化
     if(!inherits(sub_model, "try-error")) {
       coef_summary <- summary(sub_model)$coefficients
       rar_row <- coef_summary[1, ]  # RAR的结果在第一行
-      
+    
       new_row <- data.frame(
         Various = level,
         Estimate = sprintf("%.6f", rar_row["Estimate"]),
         `Std. Error` = sprintf("%.6f", rar_row["Std. Error"]),
         `t value` = sprintf("%.6f", rar_row["t value"]),
         `p value` = sprintf("%.6E", rar_row["Pr(>|t|)"]),
-        `P for int` = "",    # 添加这一列
+        `P for int` = "",    
         stringsAsFactors = FALSE
       )
       results_df <- rbind(results_df, new_row)
@@ -368,17 +380,8 @@ perform_subgroup_analysis <- function(data,
                             paste(covariates[covariates != group_var], 
                                   collapse = " + "))
     
-    # 创建完整数据的survey design
-    design_full <- svydesign(
-      data = data,
-      id = as.formula(paste0("~", design_vars["id"])),
-      strata = as.formula(paste0("~", design_vars["strata"])),
-      weights = as.formula(paste0("~", design_vars["weights"])),
-      nest = TRUE
-    )
-    
-    mod_main <- svyglm(as.formula(main_formula), design = design_full, family = family)
-    mod_inter <- svyglm(as.formula(inter_formula), design = design_full, family = family)
+    mod_main <- svyglm(as.formula(main_formula), design = full_design, family = family)
+    mod_inter <- svyglm(as.formula(inter_formula), design = full_design, family = family)
     
     # 检验交互作用
     interaction_test_result <- anova(mod_main, mod_inter)
@@ -386,8 +389,7 @@ perform_subgroup_analysis <- function(data,
     cat("\n交互作用检验结果：\n")
     print(interaction_test_result)
     
-    # 修改这部分：从输出文本中提取P值
-    # 获取交互作用P值 - 从输出中提取 "p= 数字" 部分
+    # 获取交互作用P值
     p_text <- capture.output(print(interaction_test_result))
     p_value_line <- p_text[grep("p=", p_text)]
     p_interaction <- as.numeric(sub(".*p= ([0-9.]+).*", "\\1", p_value_line))
@@ -404,11 +406,6 @@ perform_subgroup_analysis <- function(data,
       pvalue = `p.value`,
       pForInt = `P for int`
     )
-  
-  # 保存为CSV，使用tab分隔符以保持格式
-  #timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-  #filename <- sprintf("%s_subgroup_analysis_%s.csv", group_var, timestamp)
-  # write.table(results_df, filename, sep=",", row.names=FALSE, quote=FALSE)
   
   return(results_df)
 }
@@ -430,8 +427,8 @@ plot_subgroup_forest <- function(data, clip, xticks) {
   data <- data %>%
     mutate(pForInt = ifelse(grepl("\\(%\\)", data$Various), pForInt, ""),
            `OR(95% CI)` = case_when(
-             is.na(OR) | is.na(lower) | is.na(upper) ~ NA_character_,
-             TRUE ~ sprintf("%.3f (%.3f-%.3f)", OR, lower, upper))
+             is.na(OR) | is.na(lower) | is.na(upper) | is.na(pvalue) ~ NA_character_,
+             TRUE ~ sprintf("%.3f (%.3f-%.3f)", OR, lower, upper, pvalue))
     )
   
   # 1. 合并分组变量信息为新的一列
@@ -530,143 +527,3 @@ if(F){
 }
 
 
-rcs_threshold_analysis <- function(data, 
-                                 y_var,           
-                                 x_var,           
-                                 covariates,      
-                                 weight_var = "wt",
-                                 strata_var = "SDMVSTRA",
-                                 psu_var = "SDMVPSU",
-                                 nknots = 4) {
-  
-  # 1. 构建加权设计
-  design <- svydesign(
-    id = as.formula(paste0("~", psu_var)),
-    strata = as.formula(paste0("~", strata_var)),
-    weights = as.formula(paste0("~", weight_var)),
-    nest = TRUE,
-    data = data
-  )
-  
-  # 2. 准备数据
-  dd <- datadist(data)
-  options(datadist = "dd")
-  
-  # 3. 构建RCS模型公式
-  if(length(covariates) > 0) {
-    formula_str <- paste0(y_var, " ~ rcs(", x_var, ",", nknots, ") + ", 
-                         paste(covariates, collapse = " + "))
-  } else {
-    formula_str <- paste0(y_var, " ~ rcs(", x_var, ",", nknots, ")")
-  }
-  
-  # 内部函数：给定cutpoint计算logLik
-  get_loglik <- function(cutpoint) {
-    # 创建分段变量
-    data$x_split <- ifelse(data[[x_var]] <= cutpoint,
-                          data[[x_var]],
-                          cutpoint + (data[[x_var]] - cutpoint))
-    
-    design_tmp <- update(design, x_split = data$x_split)
-    
-    # 构建完整公式
-    if(length(covariates) > 0) {
-      full_formula <- paste(y_var, "~ x_split +", paste(covariates, collapse = " + "))
-    } else {
-      full_formula <- paste(y_var, "~ x_split")
-    }
-    
-    model_tmp <- svyglm(as.formula(full_formula), design = design_tmp, family = quasibinomial())
-    return(list(logLik = as.numeric(logLik(model_tmp)), model = model_tmp))
-  }
-  
-  # Step 1: 初筛5%-95%之间，每隔5%
-  quantiles_all <- quantile(data[[x_var]], probs = seq(0.05, 0.95, 0.05), na.rm = TRUE)
-  loglik_list <- lapply(quantiles_all, get_loglik)
-  loglik_values <- sapply(loglik_list, function(x) x$logLik)
-  best_idx <- which.max(loglik_values)
-  best_cut_init <- quantiles_all[best_idx]
-  
-  # Step 2: ±4%范围内缩小
-  refined_range <- quantile(data[[x_var]], 
-                           probs = seq(0.01 * (best_idx*5 - 4), 
-                                     0.01 * (best_idx*5 + 4), 
-                                     length.out = 3), 
-                           na.rm = TRUE)
-  
-  quartile_points <- quantile(refined_range, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
-  loglik_q <- lapply(quartile_points, get_loglik)
-  loglik_q_vals <- sapply(loglik_q, function(x) x$logLik)
-  best_q_idx <- which.max(loglik_q_vals)
-  best_q <- quartile_points[best_q_idx]
-  
-  # Step 3: ±25%范围内再次递归缩小
-  final_range <- seq(
-    best_q - 0.25 * (best_q - min(refined_range)),
-    best_q + 0.25 * (max(refined_range) - best_q),
-    length.out = 3
-  )
-  loglik_final <- lapply(final_range, get_loglik)
-  loglik_final_vals <- sapply(loglik_final, function(x) x$logLik)
-  final_idx <- which.max(loglik_final_vals)
-  final_cut <- final_range[final_idx]
-  final_model <- loglik_final[[final_idx]]$model
-  
-  # 4. 拟合最终RCS模型
-  rcs_model <- svyglm(as.formula(formula_str), 
-                      design = design, 
-                      family = quasibinomial())
-  
-  # 5. 生成预测数据
-  x_range <- seq(min(data[[x_var]]), max(data[[x_var]]), length.out = 100)
-  pred_data <- data.frame(x = x_range)
-  names(pred_data)[1] <- x_var
-  
-  # 添加协变量的平均值或众数
-  for(cov in covariates) {
-    if(is.numeric(data[[cov]])) {
-      pred_data[[cov]] <- mean(data[[cov]], na.rm = TRUE)
-    } else {
-      pred_data[[cov]] <- names(which.max(table(data[[cov]])))
-    }
-  }
-  
-  # 6. 计算预测值
-  pred_data$pred <- predict(rcs_model, newdata = pred_data, type = "response")
-  
-  # 7. 创建结果表格
-  results_table <- data.frame(
-    "Inflection point" = c(paste0("≤", round(final_cut, 1)), 
-                          paste0(">", round(final_cut, 1)),
-                          "Log-likelihood ratio"),
-    "Adjusted OR (95% CI)" = c(
-      sprintf("%.2f (%.2f-%.2f)", 
-              exp(coef(final_model)["x_split"]),
-              exp(coef(final_model)["x_split"] - 1.96 * sqrt(vcov(final_model)["x_split", "x_split"])),
-              exp(coef(final_model)["x_split"] + 1.96 * sqrt(vcov(final_model)["x_split", "x_split"]))),
-      sprintf("%.2f (%.2f-%.2f)", 
-              exp(coef(final_model)["x_split"]),
-              exp(coef(final_model)["x_split"] - 1.96 * sqrt(vcov(final_model)["x_split", "x_split"])),
-              exp(coef(final_model)["x_split"] + 1.96 * sqrt(vcov(final_model)["x_split", "x_split"]))),
-      sprintf("%.3f", logLik(final_model)[1])
-    ),
-    "P-value" = c(
-      sprintf("%.3f", summary(final_model)$coefficients["x_split", "Pr(>|t|)"]),
-      sprintf("%.3f", summary(final_model)$coefficients["x_split", "Pr(>|t|)"]),
-      ""
-    )
-  )
-  
-  # 8. 打印结果
-  print(knitr::kable(results_table, 
-                     format = "pipe",
-                     caption = "RCS curve threshold analysis"))
-  
-  # 9. 返回结果
-  return(list(
-    table = results_table,
-    cutpoint = final_cut,
-    model = rcs_model,
-    pred_data = pred_data
-  ))
-}

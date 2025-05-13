@@ -8,6 +8,9 @@ library(forestplot)
 # load functions
 source("../functions.R")
 
+
+
+
 # 设置保留小数点后3位
 options(digits=3)
 
@@ -328,7 +331,8 @@ p2 <- plot_segmented_fit(
   x_var = "RAR_log",
   y_var = "MI",
   cutpoint = result$cutpoint,
-  covariates = covariates
+  covariates = covariates,
+  p_nonlinear = nonlin_test[2,"P"]
 )
 
 # 保存图形
@@ -385,7 +389,7 @@ gender_results <- perform_subgroup_analysis(
 age_results <- perform_subgroup_analysis(
   data = new_dat,
   group_var = "Age",
-  group_levels = c("18-45", "46-69", ">69"),
+  group_levels = c("18-45","46-60",">60"),
   outcome_vars = c(primary = "status"),
   exposure_vars = c(primary = "RAR_log"),
   covariates = c("Gender", "Race", "EDUcation", "PIR",

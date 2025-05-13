@@ -12,11 +12,11 @@ dat <- new_dat
 
 ####__________年龄#### 
 dat$Age <- ifelse(dat$Age<=45,1,
-                          ifelse(dat$Age<=69,2,3))
+                          ifelse(dat$Age<=60,2,3))
 #加标签
 dat$Age <- factor(dat$Age,
                           levels = c(1,2,3),
-                          labels = c("18-45","46-69",">69"))
+                          labels = c("18-45","46-60",">60"))
 table(dat$Age)
 
 
