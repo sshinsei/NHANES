@@ -13,31 +13,43 @@ extract_regression_results <- function(model, model_name) {
   # 提取系数表格部分
   coef_lines <- reg_output[grep("^\\s*\\w+\\s+[-0-9.]+\\s+[-0-9.]+\\s+[-0-9.]+\\s+[-0-9.e]+", reg_output)]
   
+  # 如果没有找到匹配的行,返回NULL
+  if(length(coef_lines) == 0) {
+    warning("No coefficient lines found in regression output")
+    return(NULL)
+  }
+  
   # 创建数据框
   coef_df <- data.frame(
     do.call(rbind, strsplit(trimws(coef_lines), "\\s+"))
   )
+  
+  # 检查数据框是否为空
+  if(nrow(coef_df) == 0) {
+    warning("Empty coefficient data frame")
+    return(NULL)
+  }
+  
+  # 设置列名
   names(coef_df) <- c("Variable", "Estimate", "Std. Error", "t value", "Pr(>|t|)")
-  # 保留前3行
-  coef_df <- coef_df[1:3, ]
-  # Estimate和Std. Error转为数值
-  coef_df$Estimate <- as.numeric(coef_df$Estimate)
-  coef_df$`Std. Error` <- as.numeric(coef_df$`Std. Error`)
-
-  # 计算OR
+  
+  # 转换为数值型
+  coef_df$Estimate <- as.numeric(as.character(coef_df$Estimate))
+  coef_df$`Std. Error` <- as.numeric(as.character(coef_df$`Std. Error`))
+  
+  # 计算OR和CI
   coef_df$OR <- exp(coef_df$Estimate)
   coef_df$lower <- exp(coef_df$Estimate - 1.96 * coef_df$`Std. Error`)
   coef_df$upper <- exp(coef_df$Estimate + 1.96 * coef_df$`Std. Error`)
-
+  
   # 保留三位小数
   coef_df$OR <- round(coef_df$OR, 3)
   coef_df$lower <- round(coef_df$lower, 3)
   coef_df$upper <- round(coef_df$upper, 3)
-
+  
   # 保存为CSV
   write.csv(coef_df, paste0("results_", model_name, ".csv"), row.names = FALSE)
   
-  # 返回数据框
   return(coef_df)
 }
 
@@ -276,48 +288,90 @@ plot_segmented_fit <- function(data, x_var, y_var, cutpoint, covariates,
 
 
 
+
 # -------------- 通用亚组分析函数 -----------------
 perform_subgroup_analysis <- function(data, 
-                                      group_var,           
-                                      group_levels = NULL, 
-                                      outcome_vars = c(primary = "status"),
-                                      exposure_vars = c(primary = "RAR"),
-                                      covariates = c("Age", "Race", "EDUcation", "PIR",
-                                                     "Gender", "Drink", "BMI", "Smoke", 
-                                                     "hyptersion", "Stroke", "CHD"),
-                                      design_vars = c(id = "SDMVPSU", 
-                                                      strata = "SDMVSTRA", 
-                                                      weights = "wt"),
-                                      family = "quasibinomial",
-                                      interaction_test = TRUE
-) {
+                                    group_var,           
+                                    outcome_vars,
+                                    exposure_vars,
+                                    covariates,
+                                    design_vars = c(id = "SDMVPSU", 
+                                                    strata = "SDMVSTRA", 
+                                                    weights = "wt")) {
+  
+  # 检查分组变量的水平
+  group_levels <- unique(data[[group_var]])
+  if(length(group_levels) < 2) {
+    warning(sprintf("分组变量 %s 只有一个水平: %s", group_var, paste(group_levels, collapse=", ")))
+    return(NULL)
+  }
+  
+  # 检查group_var是否包含下划线并处理
+  if(grepl("_", group_var)) {
+    group_var_prefix <- sub("_.*", "", group_var)
+  } else {
+    group_var_prefix <- group_var
+  }
   
   # 创建结果存储数据框
-  results_df <- data.frame(
+  group_results <- data.frame(
     Various = character(),
     Estimate = character(),      
-    `Std. Error` = character(),  
-    `t value` = character(),     
-    `p value` = character(),     
-    `P for int` = character(),   
+    SE = character(),
+    tvalue = character(),
+    pvalue = character(),
+    pForInt = character(),
     stringsAsFactors = FALSE
   )
   
-  # 添加组别标题行
-  results_df <- rbind(results_df, 
-                      data.frame(Various = paste0(group_var, " (%)"),
-                                 Estimate = "",
-                                 `Std. Error` = "",
-                                 `t value` = "",
-                                 `p value` = "",
-                                 `P for int` = "",
-                                 stringsAsFactors = FALSE))
+  # 对每个分组水平进行分析
+  for(level in group_levels) {
+    # 创建子集数据
+    subset_data <- subset(data, data[[group_var]] == level)
+    
+    # 为子集数据创建新的survey设计对象
+    sub_design <- svydesign(
+      data = subset_data,
+      id = as.formula(paste0("~", design_vars["id"])),
+      strata = as.formula(paste0("~", design_vars["strata"])),
+      weights = as.formula(paste0("~", design_vars["weights"])),
+      nest = TRUE
+    )
+    
+    # 构建模型公式
+    formula_str <- paste0(outcome_vars, " ~ ", 
+                         exposure_vars, " + ",
+                         paste(covariates[!grepl(group_var_prefix, covariates)], 
+                               collapse = " + "))
+    
+    # 运行模型
+    sub_model <- try({
+      svyglm(
+        as.formula(formula_str),
+        design = sub_design,
+        family = quasibinomial()
+      )
+    })
+    
+    # 提取结果并格式化
+    if(!inherits(sub_model, "try-error")) {
+      coef_summary <- summary(sub_model)$coefficients
+      rar_row <- coef_summary[2, ]
+      
+      new_row <- data.frame(
+        Various = level,
+        Estimate = sprintf("%.6f", rar_row["Estimate"]),
+        SE = sprintf("%.6f", rar_row["Std. Error"]),
+        tvalue = sprintf("%.6f", rar_row["t value"]),
+        pvalue = sprintf("%.6E", rar_row["Pr(>|t|)"]),
+        pForInt = NA,
+        stringsAsFactors = FALSE
+      )
+      group_results <- rbind(group_results, new_row)
+    }
+  }
   
-  # 存储交互作用P值
-  p_interaction <- NA
-  
-  # 创建完整数据的survey design对象
-  options(survey.lonely.psu = "adjust")
+  # 创建完整数据的survey设计对象用于交互检验
   full_design <- svydesign(
     data = data,
     id = as.formula(paste0("~", design_vars["id"])),
@@ -326,89 +380,63 @@ perform_subgroup_analysis <- function(data,
     nest = TRUE
   )
   
-  # 对每个分组水平进行分析
-  for(level in group_levels) {
-    # 使用subset.survey.design获取子组设计
-    sub_design <- subset(full_design, data[[group_var]] == level)
+  # 添加交互检验
+  full_formula <- paste0(outcome_vars, " ~ ", 
+                        exposure_vars, " * ", group_var, " + ",
+                        paste(covariates[!grepl(group_var_prefix, covariates)], 
+                              collapse = " + "))
   
-    # 构建模型公式
-    formula_str <- paste0(outcome_vars[1], " ~ ", 
-                          exposure_vars[1], " + ",
-                          paste(covariates[covariates != group_var], 
-                                collapse = " + "))
+  interaction_model <- try(svyglm(as.formula(full_formula), 
+                                 design = full_design, 
+                                 family = quasibinomial()))
   
-    # 运行模型
-    sub_model <- try({
-      svyglm(
-        as.formula(formula_str),
-        design = sub_design,
-        family = family
-      )
-    })
-  
-    # 提取RAR的系数结果并格式化
-    if(!inherits(sub_model, "try-error")) {
-      coef_summary <- summary(sub_model)$coefficients
-      rar_row <- coef_summary[1, ]  # RAR的结果在第一行
-    
-      new_row <- data.frame(
-        Various = level,
-        Estimate = sprintf("%.6f", rar_row["Estimate"]),
-        `Std. Error` = sprintf("%.6f", rar_row["Std. Error"]),
-        `t value` = sprintf("%.6f", rar_row["t value"]),
-        `p value` = sprintf("%.6E", rar_row["Pr(>|t|)"]),
-        `P for int` = "",    
-        stringsAsFactors = FALSE
-      )
-      results_df <- rbind(results_df, new_row)
+  if(!inherits(interaction_model, "try-error")) {
+    coef_summary <- summary(interaction_model)$coefficients
+    interaction_terms <- grep(paste0(exposure_vars, ":", group_var), 
+                            rownames(coef_summary), value = TRUE)
+    if(length(interaction_terms) > 0) {
+      p_interaction <- coef_summary[interaction_terms[1], "Pr(>|t|)"]
+    } else {
+      p_interaction <- NA
     }
+  } else {
+    p_interaction <- NA
   }
   
-  # 进行交互作用检验
-  if(interaction_test) {
-    # 主效应模型
-    main_formula <- paste0(outcome_vars[1], " ~ ", 
-                           exposure_vars[1], " + ", 
-                           group_var, " + ",
-                           paste(covariates[covariates != group_var], 
-                                 collapse = " + "))
-    
-    # 交互作用模型
-    inter_formula <- paste0(outcome_vars[1], " ~ ", 
-                            exposure_vars[1], " * ", 
-                            group_var, " + ",
-                            paste(covariates[covariates != group_var], 
-                                  collapse = " + "))
-    
-    mod_main <- svyglm(as.formula(main_formula), design = full_design, family = family)
-    mod_inter <- svyglm(as.formula(inter_formula), design = full_design, family = family)
-    
-    # 检验交互作用
-    interaction_test_result <- anova(mod_main, mod_inter)
-    
-    cat("\n交互作用检验结果：\n")
-    print(interaction_test_result)
-    
-    # 获取交互作用P值
-    p_text <- capture.output(print(interaction_test_result))
-    p_value_line <- p_text[grep("p=", p_text)]
-    p_interaction <- as.numeric(sub(".*p= ([0-9.]+).*", "\\1", p_value_line))
-    
-    # 在第一行填入交互作用P值，保留3位小数
-    results_df$`P for int`[1] <- sprintf("%.3f", p_interaction)
-  }
+  # 添加分组变量名作为第一行
+  group_row <- data.frame(
+    Various = paste0(group_var, "(%)"),
+    Estimate = NA,
+    SE = NA,
+    tvalue = NA,
+    pvalue = NA,
+    pForInt = sprintf("%.3f", p_interaction),
+    stringsAsFactors = FALSE
+  )
   
-  # rename results_df
-  results_df <- results_df %>%
-    rename(
-      SE = `Std..Error`,
-      tvalue = `t.value`,
-      pvalue = `p.value`,
-      pForInt = `P for int`
-    )
+  # 合并结果
+  results_df <- rbind(group_row, group_results)
   
   return(results_df)
 }
+
+
+
+
+# ------------添加termsGlobeTest函数--------------
+termsGlobeTest <- function(model, test.terms) {
+  canonicalOrder <- function(term) sapply(lapply(strsplit(term, ":"), sort), paste, collapse = ":")
+  okbeta <- !is.na(coef(model, na.rm = FALSE))
+  tt <- attr(terms(model), "term.labels")
+  aa <- attr(model.matrix(model), "assign")[okbeta]
+  index <- which(aa %in% match(canonicalOrder(test.terms), canonicalOrder(tt)))
+  beta <- coef(model)[index]
+  V <- vcov(model)[index, index]  
+  chisq <- beta %*% solve(V) %*% beta
+  p <- pchisq(chisq, length(index), lower.tail = FALSE)
+  return(p)
+}
+
 
 
 
@@ -417,23 +445,36 @@ plot_subgroup_forest <- function(data, clip, xticks) {
   # 将Estimate和SE转换为数值型
   data$Estimate <- as.numeric(data$Estimate)
   data$SE <- as.numeric(data$SE)
-  
+  data$pvalue <- as.numeric(data$pvalue)
+  data$pForInt <- as.numeric(data$pForInt)
+  data$pForInt <- sprintf("%.3f", data$pForInt)
+
+
   # 计算OR和CI
   data$OR <- exp(data$Estimate)
   data$lower <- exp(data$Estimate - 1.96 * data$SE)
   data$upper <- exp(data$Estimate + 1.96 * data$SE)
   
-  # remain the value that fist showed,other values equal to the first value are replaced to ""
+  # 直接使用已经格式化的pForInt值，不再进行额外的格式化
   data <- data %>%
-    mutate(pForInt = ifelse(grepl("\\(%\\)", data$Various), pForInt, ""),
+    mutate(pForInt = ifelse(grepl("\\(\\%\\)", data$Various), pForInt, ""),
            `OR(95% CI)` = case_when(
-             is.na(OR) | is.na(lower) | is.na(upper) | is.na(pvalue) ~ NA_character_,
+             is.na(OR) | is.na(lower) | is.na(upper) | is.na(pvalue)  ~ NA_character_,
              TRUE ~ sprintf("%.3f (%.3f-%.3f)", OR, lower, upper, pvalue))
     )
   
   # 1. 合并分组变量信息为新的一列
-  tempd <- data %>% select(Various,`OR(95% CI)`,pvalue,P.for.int,pForInt,OR, lower, upper) 
-  colnames(tempd) <-  c("Variables","OR(95% CI)","p_value"," ","P for interaction","OR", "lower", "upper") 
+  # 首先打印列名，确认位置
+  print(names(data))
+
+  # 使用列位置索引选择
+  tempd <- data[, c("Various", "OR(95% CI)", "pvalue", "pForInt", "OR", "lower", "upper")]
+
+  # 或者使用dplyr的方式
+  # tempd <- data %>% 
+  #   select(all_of(c("Various", "OR(95% CI)", "pvalue", "P.for.int", "pForInt", "OR", "lower", "upper")))
+
+  colnames(tempd) <- c("Variables", "OR(95% CI)", "p_value", "P for interaction", "OR", "lower", "upper")
   
   # 2. 构造新表格
   table_out <- tempd
@@ -449,9 +490,9 @@ plot_subgroup_forest <- function(data, clip, xticks) {
   }
   
   tempd <- cbind(table_out[,4],tempd)
-  
+
   # 1. 生成labeltext矩阵并插入列名
-  labeltext <- as.matrix(tempd[, c(1, 2, 3, 4, 6)])
+  labeltext <- as.matrix(tempd[, c(1, 2, 3, 4, 5)])
   colnames(labeltext) <- NULL  # forestplot不需要矩阵的colnames
   # 插入列名作为第一行
   labeltext <- rbind(
@@ -525,5 +566,9 @@ if(F){
   }
   data2plot_spaced <- add_spacing_rows(data2plot)
 }
+
+
+
+
 
 

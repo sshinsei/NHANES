@@ -10,14 +10,32 @@ library(tidyverse)
 new_dat <- read.csv("./00_rawdata/mergeData.csv", row.names = 1)
 dat <- new_dat
 
+# 定义筛选条件函数
+filter_conditions <- function(data) {
+  # 年龄条件
+  age_condition <- data$Age >= 20 & data$Age <= 85
+  
+  # 怀孕条件 (2=否, 9=不知道, NA=缺失)
+  pregnancy_condition <- data$Pregnancy %in% c(2, 9, NA)
+  
+  return(age_condition & pregnancy_condition)
+}
+# 执行分析
+dat <- dat[filter_conditions(dat), ]
+cat(sprintf("基本条件筛选后样本量: %d\n", nrow(dat)))
+# 原始样本量：39346
+# 基本条件筛选后样本量: 37619
+# 年龄>=20筛选后样本量: 32920  (删除 893  个样本)
+# 怀孕状态筛选后样本量: 32397  (删除 523  个样本)
+
+
 ####__________年龄#### 
-dat$Age <- ifelse(dat$Age<=45,1,
-                          ifelse(dat$Age<=60,2,3))
+dat$Age_cat <- ifelse(dat$Age<=60, 1, 2)
 #加标签
-dat$Age <- factor(dat$Age,
-                          levels = c(1,2,3),
-                          labels = c("18-45","46-60",">60"))
-table(dat$Age)
+dat$Age_cat <- factor(dat$Age_cat,
+                          levels = c(1,2),
+                          labels = c("<=60",">60"))
+table(dat$Age_cat)
 
 
 ####__________性别####
@@ -38,15 +56,16 @@ table(dat$Race,useNA = "ifany")
 # 3	Non-Hispanic White
 # 4	Non-Hispanic Black
 # 5	Other Race - Including Multi-Racial
-dat$Race <- ifelse(dat$Race==1,1,
-                           ifelse(dat$Race==3,2,
-                                  ifelse(dat$Race==4,3,4)))
+#dat$Race <- ifelse(dat$Race==1,1,
+#                           ifelse(dat$Race==3,2,
+#                                  ifelse(dat$Race==4,3,4)))
 dat$Race <- factor(dat$Race,
-                           levels = c(1,2,3,4),
+                           levels = c(1,2,3,4,5),
                            labels = c("Mexican American",
+                                      "Other Hispanic",
                                       "Non-Hispanic White",
                                       "Non-Hispanic Black",
-                                      "Other"))
+                                      "Other Race"))
 table(dat$Race,useNA = "ifany") 
 
 
@@ -80,33 +99,35 @@ table(dat$EDUcation2,useNA = "ifany")
 # .	Missing
 #文献的做法是将Less than 9th grade 和9-11th grade (Includes 12th grade with no diploma)合并
 # 分类为：Below high school 和 High School or above
-dat$EDUcation <- ifelse(dat$EDUcation2 %in% c(1,2),1,2)
-dat$EDUcation <- factor(dat$EDUcation,c(1,2),
+dat$EDUcation <- ifelse(dat$EDUcation2 %in% c(1,2),1,
+                        ifelse(dat$EDUcation2 %in% c(3,4,5,7,9),2,3))
+dat$EDUcation <- factor(dat$EDUcation,c(1,2,3),
                                 labels = c("Below high school",
-                                           "High School or above"))
+                                           "High School or above",
+                                           NA))
 table(dat$EDUcation,useNA = "ifany") 
 
 
 ####__________PIR####
-summary(dat$PIR) #可以发现，缺失了 294
-dat$PIR <- ifelse(dat$PIR<1,1,2)
-table(dat$PIR,useNA = "ifany") #很明显，文献将NA转在2组，也就是Not poor
-dat$PIR <- ifelse(is.na(dat$PIR),2,dat$PIR)
-dat$PIR <- factor(dat$PIR,levels = c(1,2),labels = c("Poor","Not poor"))
-table(dat$PIR,useNA = "ifany") #再次分组
+summary(dat$PIR) #可以发现，缺失了 3629
+dat$PIR_cat <- ifelse(dat$PIR<1,1,2)
+table(dat$PIR_cat,useNA = "ifany") #很明显，文献将NA转在2组，也就是Not poor
+dat$PIR_cat <- ifelse(is.na(dat$PIR_cat),2,dat$PIR_cat)
+dat$PIR_cat <- factor(dat$PIR_cat,levels = c(1,2),labels = c("Poor","Not poor"))
+table(dat$PIR_cat,useNA = "ifany") #再次分组
 
 
 
 ####__________BMI ####
-summary(dat$BMI) 
-dat$BMI <- cut(dat$BMI,
-                       breaks = c(0,18.5, 25, 30, Inf),
-                       labels = c("<18.5", "18.5-25","25-30", ">30"),
-                       left = TRUE, # 左开右闭
-                       include.lowest = TRUE 
+summary(dat$BMI) # 597
+dat$BMI_cat <- cut(dat$BMI,
+                     breaks = c(0, 25, Inf),
+                     labels = c("<=25",">25"),
+                     left = TRUE, # 左开右闭
+                     include.lowest = TRUE 
 )                                      
 
-table(dat$BMI,useNA = "ifany") #再次分组
+table(dat$BMI_cat,useNA = "ifany") #再次分组
 
 
 ####__________吸烟####
@@ -130,7 +151,7 @@ dat$Smoke <- ifelse(dat$Smoke_history == 1,
 dat$Smoke <- factor(dat$Smoke,
                         levels = c(1,2,3),
                         labels = c("smoker","smoked","no-smoke"))
-table(dat$Smoke,useNA = "ifany")  
+table(dat$Smoke,useNA = "ifany")  # 297
 #删除临时的无用变量
 dat <- subset(dat, select=-c(Smoke_history,smoke_now))
 #查看去除无用变量的数据结构
@@ -138,17 +159,36 @@ str(dat)
 
 
 ####__________饮酒####
-table(dat$Drink,useNA = "ifany")
-# 1	Yes
-# 2	No
-# 7	Refused
-# 9	Don't know
-# .	Missing
-dat$Drink <- ifelse(dat$Drink == 1,1,2)
-dat$Drink <- factor(dat$Drink,
-                        levels = c(1,2),
-                        labels = c("Yes","No"))
-table(dat$Drink,useNA = "ifany")
+# 2017以前和以后的变量定义不一致，需要更换定义
+if(F){
+  table(dat$Drink,useNA = "ifany") # 8299
+  # 1	Yes
+  # 2	No
+  # 7	Refused
+  # 9	Don't know
+  # .	Missing
+  
+  # 0	去年从未	269	269	
+  # 1	每天	2	271	
+  # 2	几乎每天	6	277	
+  # 3	每周3至4次	8	285	
+  # 4	每周2次	14	299	
+  # 5	每周一次	二十九	328	
+  # 6	每月2至3次	二十七	355	
+  # 7	每月一次	二十五	380	
+  # 8	去年有 7 至 11 次	19	399	
+  # 9	去年有 3 至 6 次	二十九	428	
+  # 10	去年有 1 至 2 次	89	517	
+  # 77	被拒	1	518	
+  # 99	不知道	4	522	
+  # .	丢失的	5011	5533
+  dat$Drink <- ifelse(dat$Drink == 1,1,2)
+  dat$Drink <- factor(dat$Drink,
+                      levels = c(1,2),
+                      labels = c("Yes","No"))
+  table(dat$Drink,useNA = "ifany")
+}
+
 
 
 
@@ -185,12 +225,13 @@ table(dat$CHD,useNA = "ifany")
 
 
 ####__________高血脂####
-summary(dat$TC_mg)  # 
-summary(dat$TG_mg)  # 1
-summary(dat$HDL_mg) # 
-summary(dat$LDL_mg) # 2441
-table(dat$cholesterol,useNA = "ifany")
+summary(dat$TC_mg)  # 2440
+summary(dat$TG_mg)  # 2588
+summary(dat$HDL_mg) # 2440
+summary(dat$LDL_mg) # 22004
+table(dat$cholesterol,useNA = "ifany") # 5286
 dat$TC_mg <- ifelse(is.na(dat$TC_mg),0,dat$TC_mg)
+dat$TG_mg <- ifelse(is.na(dat$TG_mg),0,dat$TG_mg)
 dat$HDL_mg <- ifelse(is.na(dat$HDL_mg),100,dat$HDL_mg) #低水平为正常
 dat$LDL_mg <- ifelse(is.na(dat$LDL_mg),0,dat$LDL_mg)
 dat$lipids <- ifelse(dat$TC_mg>200 | 
@@ -199,16 +240,16 @@ dat$lipids <- ifelse(dat$TC_mg>200 |
                            (dat$HDL_mg<50 & dat$Gender==2) | 
                            dat$LDL_mg>=130 |
                            dat$cholesterol==1,1,0)
-
-table(dat$lipids,useNA = "ifany")
+# dat$lipids <- ifelse(dat$lipids == 1, 1,0)
+table(dat$lipids,useNA = "ifany") # 2691
   
 
 
 ####__________SBP####
-summary(dat$BPXSY1) # 288
-summary(dat$BPXSY2) # 355
-summary(dat$BPXSY3) # 394
-summary(dat$BPXSY4) # 4336
+summary(dat$BPXSY1) # 3487
+summary(dat$BPXSY2) # 3070
+summary(dat$BPXSY3) # 3234
+summary(dat$BPXSY4) # 36743
 #可以发现，4次的SBP都有缺失的存在，但是我们需要对4次的SBP求均值
 #为了能够计算，先将缺失定义为0
 dat$SBP1 <- ifelse(is.na(dat$BPXSY1),0,dat$BPXSY1)
@@ -223,13 +264,13 @@ dat$SBPn4 <- ifelse(is.na(dat$BPXSY4),0,1)
 dat$SBPn <- dat$SBPn1 + dat$SBPn2 + dat$SBPn3 + dat$SBPn4
 #计算均值
 dat$SBP <- (dat$SBP1 + dat$SBP2 + dat$SBP3 + dat$SBP4)/dat$SBPn
-summary(dat$SBP) #发现有  74 人的4次SBP均缺失，暂时不处理
+summary(dat$SBP) #发现有 1718 人的4次SBP均缺失，暂时不处理
 
 sbp_temp <- subset(dat,is.na(dat$BPXSY1) & 
                      is.na(dat$BPXSY2) & 
                      is.na(dat$BPXSY3) & 
                      is.na(dat$BPXSY4))
-nrow(sbp_temp) #验证得到，确实有 74 个人的四次血压均为缺失
+nrow(sbp_temp) #验证得到，确实有 1718 个人的四次血压均为缺失
 #删除临时的无用变量
 dat <- subset(dat, select=-c(SBP1,SBP2,SBP3,SBP4,
                                      BPXSY1,BPXSY2,BPXSY3,BPXSY4,
@@ -258,13 +299,13 @@ dat$DBPn <- dat$DBPn1 + dat$DBPn2 + dat$DBPn3 + dat$DBPn4
 #计算均值
 dat$DBP <- (dat$DBP1 + dat$DBP2 + dat$DBP3 + dat$DBP4)/dat$DBPn
 
-summary(dat$DBP) #发现有3个人的4次DBP均缺失，暂时不处理
+summary(dat$DBP) #发现有 1718 个人的4次DBP均缺失，暂时不处理
 
 dbp_temp <- subset(dat,is.na(dat$BPXDI1) & 
                      is.na(dat$BPXDI2) & 
                      is.na(dat$BPXDI3) & 
                      is.na(dat$BPXDI4))
-nrow(dbp_temp) #验证得到，确实有3个人的四次血压均为缺失
+nrow(dbp_temp) #验证得到，确实有 1718 个人的四次血压均为缺失
 #删除临时的无用变量
 dat <- subset(dat, 
                   select=-c(DBP1,DBP2,DBP3,DBP4,
@@ -291,6 +332,49 @@ dat <- subset(dat, select=-c(hypter,SBP_new,DBP_new))
 str(dat)
 
 
+####__________糖尿病####
+# 需要综合：
+#  糖尿病史
+#  注射胰岛素
+#  服药降糖药
+#  Glycohemoglobin>=6.5
+#  Glucose>=126
+#判断缺失情况
+table(dat$Diabetes1,useNA = "ifany")
+table(dat$Insulin,useNA = "ifany") # 1
+table(dat$Sugar,useNA = "ifany") #有缺失，将缺失赋值为999
+dat$Sugar <- ifelse(is.na(dat$Sugar),
+                        999,dat$Sugar)
+summary(dat$Glycohemoglobin) # 2041
+summary(dat$Glucose) #有缺失，先将缺失赋值为0
+dat$Glucose <- ifelse(is.na(dat$Glucose),0,dat$Glucose)
+dat$Glycohemoglobin <- ifelse(is.na(dat$Glycohemoglobin),0,dat$Glycohemoglobin)
+dat$DM <- ifelse(dat$Diabetes1==1 |
+                   dat$Insulin==1 | 
+                   dat$Sugar==1|
+                   dat$Glycohemoglobin>=6.5|
+                   dat$Glucose>=126 ,1,2)
+table(dat$DM,useNA = "ifany")
+#删除临时的无用变量
+dat <- subset(dat, select=-c(Diabetes1,Insulin,Sugar,Glycohemoglobin,Glucose))
+
+
+
+####__________身体活动####
+table(dat$med,useNA = "ifany")
+table(dat$high,useNA = "ifany")
+
+summary(dat$med) #查看变量的分布
+summary(dat$high) #查看变量的分布
+
+dat$pa <- ifelse(dat$med==1|dat$high==1,1,2)
+dat$pa <- factor(dat$pa,levels = c(1,2),labels = c("high","low"))
+table(dat$pa,useNA = "ifany")
+dat <- subset(dat, select=-c(med,high))
+#查看去除无用变量的数据结构
+str(dat)
+
+
 
 # 自变量----------------
 # RAR  = (中性粒细胞 (NEU) * 血小板 (PLT) * 单核细胞 (MONO))/淋巴细胞 (LYM)
@@ -299,9 +383,10 @@ dat$RAR  <- dat$RDW/dat$albumin
 # 取log
 dat$RAR_log <- log(dat$RAR )
 
+summary(dat$RAR) # 2646
 
 # 因变量----------------
-table(dat$MI,useNA = "ifany")
+table(dat$MI,useNA = "ifany") # 1162
 # 1 yes
 # 2 no 
 # 7 refused
@@ -316,18 +401,125 @@ table(dat$MI,useNA = "ifany")
 
 # 去除多于变量
 dat <- subset(dat, select=-c(WC,EDUcation3,Neutrophils,Lymphocyte,
-                                     albumin, CRP_mg_l, EDUcation2
+                                     albumin, EDUcation2
                                      ))
 
 
 ####转换权重####
-dat$wt_LDL <- ifelse(dat$wt_LDL==0 | is.na(dat$wt_LDL),dat$WTMEC2YR,dat$wt_LDL)
-# dat$wt_glu <- ifelse(dat$wt_glu==0 | is.na(dat$wt_glu),dat$WTMEC2YR,dat$wt_glu)
-dat$wt <- apply(dat[,c("wt_LDL","WTMEC2YR"),],1,min) #取出最小值
-dat$wt <- dat$WTMEC2YR/3 # 3个周期
+dat <- dat %>% 
+  mutate(
+    # 处理权重
+    wt = case_when(
+      wt_LDL == 0 | is.na(wt_LDL) ~ WTMEC2YR,  # 如果LDL权重缺失或为0，使用WTMEC2YR（测试权重）
+      TRUE ~ wt_LDL  # 否则使用LDL权重
+    )
+  )
+
+dat$wt <- dat$wt/7 # 2010-2018 7个周期
 
 
-write.csv(dat, "cleanData.csv")
+# 检查权重是否正确赋值
+summary(dat$wt)  # 查看权重的分布情况
+
+
+
+
+
+
+# 5. 数据筛选 --------------
+
+
+# 分析样本量变化
+analyze_sample_size <- function(data) {
+  # 原始样本量
+  n_original <- nrow(data)
+  cat(sprintf("原始样本量: %d\n", n_original))
+  
+  # 年龄筛选
+  age_filtered <- data[data$Age >= 20 & data$Age <= 85, ]
+  n_age <- nrow(age_filtered)
+  n_removed_age <- n_original - n_age
+  cat(sprintf("年龄筛选后样本量: %d (删除 %d 个样本)\n", n_age, n_removed_age))
+  
+  # 怀孕状态筛选
+  pregnancy_filtered <- age_filtered[age_filtered$Pregnancy %in% c(2, 9, NA), ]
+  n_pregnancy <- nrow(pregnancy_filtered)
+  n_removed_pregnancy <- n_age - n_pregnancy
+  cat(sprintf("怀孕状态筛选后样本量: %d (删除 %d 个样本)\n", n_pregnancy, n_removed_pregnancy))
+  
+  return(pregnancy_filtered)
+}
+
+
+
+# Age+Race+EDUcation+PIR+Gender+
+#  Marital+pa+Drink+BMI+Smoke+hyptersion+Stroke+lipids
+
+
+# 定义需要检查缺失值的变量列表
+vars_to_check <- list(
+  # 自变量
+  independent = c("RAR"),
+  
+  # 协变量
+  covariates = c('Age','Race','EDUcation','PIR','Gender',
+                 "BMI", "Smoke", 
+                 "hyptersion", "lipids", "pa","Stroke","Marital","DM"),
+  
+  # 因变量
+  dependent = c("MI")
+)
+
+# 数据筛选主函数
+clean_data <- function(data, filter_func, vars_list) {
+  
+  # 2. 逐个检查变量的缺失值
+  for (category in names(vars_list)) {
+    cat(sprintf("\n检查%s变量的缺失值:\n", category))
+    
+    for (var in vars_list[[category]]) {
+      n_before <- nrow(data)
+      data <- data[!is.na(data[[var]]), ]
+      n_after <- nrow(data)
+      n_missing <- n_before - n_after
+      
+      cat(sprintf("%s: 删除 %d 个缺失值, 剩余样本量 %d\n", 
+                  var, n_missing, n_after))
+    }
+  }
+  
+  return(data)
+}
+
+# 执行数据清洗
+data_clean <- clean_data(dat, filter_conditions, vars_to_check)
+
+#检查independent变量的缺失值:
+#  RAR: 删除 2482 个缺失值, 剩余样本量 35137
+
+#检查covariates变量的缺失值:
+#  BMI: 删除 459 个缺失值, 剩余样本量 34678
+#Smoke: 删除 0 个缺失值, 剩余样本量 34678
+#Age: 删除 0 个缺失值, 剩余样本量 34678
+#Race: 删除 0 个缺失值, 剩余样本量 34678
+#EDUcation: 删除 0 个缺失值, 剩余样本量 34678
+#PIR: 删除 3048 个缺失值, 剩余样本量 31630
+#Gender: 删除 0 个缺失值, 剩余样本量 31630
+#hyptersion: 删除 0 个缺失值, 剩余样本量 31630
+#lipids: 删除 1856 个缺失值, 剩余样本量 29774
+#pa: 删除 0 个缺失值, 剩余样本量 29774
+#Stroke: 删除 0 个缺失值, 剩余样本量 29774
+#Marital: 删除 0 个缺失值, 剩余样本量 29774
+#DM: 删除 0 个缺失值, 剩余样本量 29774
+
+#检查dependent变量的缺失值:
+#  MI: 删除 0 个缺失值, 剩余样本量 29774
+
+
+
+# 保存结果
+write.csv(data_clean, "cleanData.csv")
+# write.csv(dat, "cleanData.csv")
 
 
 
@@ -340,11 +532,11 @@ library(officer)
 
 # 定义变量
 vars <- c("Age", "Gender", "Race", "Marital", "EDUcation", "PIR", 
-          "BMI", "Smoke", "Drink", "hyptersion", "CHD", "Stroke", "lipids")
+          "BMI", "Smoke", "Drink", "hyptersion", "CHD", "Stroke", "lipids","pa")
 
 # 定义分类变量
 catVars <- c("Age", "Gender", "Race", "Marital", "EDUcation", "PIR", 
-             "BMI", "Smoke", "Drink", "hyptersion", "CHD", "Stroke", "lipids")
+             "BMI", "Smoke", "Drink", "hyptersion", "CHD", "Stroke", "lipids","pa")
 
 # 创建Table 1
 table1 <- CreateTableOne(vars = vars, 
@@ -396,11 +588,11 @@ print(doc, target = "Table1.docx")
 
 # 定义变量
 vars <- c("Drink", "Gender", "EDUcation", "Age", "Race", "Marital", "PIR", 
-          "BMI", "Smoke", "hyptersion", "CHD", "Stroke", "lipids")
+          "BMI", "Smoke", "hyptersion", "CHD", "Stroke", "lipids","pa")
 
 # 定义分类变量
 catVars <- c("Drink", "Gender", "EDUcation", "Age", "Race", "Marital", "PIR", 
-             "BMI", "Smoke", "hyptersion", "CHD", "Stroke", "lipids")
+             "BMI", "Smoke", "hyptersion", "CHD", "Stroke", "lipids","pa")
 
 # 创建Table 2
 table2 <- CreateTableOne(vars = vars, 

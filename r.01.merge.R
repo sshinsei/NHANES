@@ -35,29 +35,29 @@ for(i in seq_along(files)){
 DEMO_D$Year <- "2005-2006"
 DEMO_E$Year <- "2007-2008"
 DEMO_F$Year <- "2009-2010"
-#DEMO_G$Year <- "2011-2012"
-#DEMO_H$Year <- "2013-2014"
-#DEMO_I$Year <- "2015-2016"
-#DEMO_J$Year <- "2017-2018"
+DEMO_G$Year <- "2011-2012"
+DEMO_H$Year <- "2013-2014"
+DEMO_I$Year <- "2015-2016"
+DEMO_J$Year <- "2017-2018"
 
 #权重数据提取
 wt_dat <- rbind(DEMO_D[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
                 DEMO_E[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
-                DEMO_F[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")]
-                #DEMO_G[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
-                #DEMO_H[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
-                #DEMO_I[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
-                #DEMO_J[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")]
+                DEMO_F[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
+                DEMO_G[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
+                DEMO_H[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
+                DEMO_I[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
+                DEMO_J[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")]
                 )
 
 #人口学特征提取， 变量名一样，直接合并，性别，年龄，种族，教育程度，婚姻，家庭经济贫困
 DEMO <- rbind(DEMO_D[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
               DEMO_E[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
-              DEMO_F[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")]
-              #DEMO_G[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
-              #DEMO_H[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
-              #DEMO_I[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
-              #DEMO_J[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")]
+              DEMO_F[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
+              DEMO_G[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
+              DEMO_H[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
+              DEMO_I[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
+              DEMO_J[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")]
               ) 
 
 #对变量进行重命名
@@ -89,11 +89,11 @@ for(i in seq_along(files)){
 
 exam <- rbind(CBC_D[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
               CBC_E[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
-              CBC_F[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")]
-              #CBC_G[,c("SEQN","LBDNENO","LBDLYMNO")],
-              #CBC_H[,c("SEQN","LBDNENO","LBDLYMNO")],
-              #CBC_I[,c("SEQN","LBDNENO","LBDLYMNO")],
-              #CBC_J[,c("SEQN","LBDNENO","LBDLYMNO")]
+              CBC_F[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
+              CBC_G[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
+              CBC_H[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
+              CBC_I[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
+              CBC_J[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")]
               ) 
 
 exam_dat <- rename(.data=exam,
@@ -118,11 +118,11 @@ for(i in seq_along(files)){
 
 wp <- rbind(BIOPRO_D[,c("SEQN","LBDSALSI")],
             BIOPRO_E[,c("SEQN","LBDSALSI")],
-            BIOPRO_F[,c("SEQN","LBDSALSI")]
-            #BIOPRO_G[,c("SEQN","LBDSALSI")],
-            #BIOPRO_H[,c("SEQN","LBDSALSI")],
-            #BIOPRO_I[,c("SEQN","LBDSALSI")],
-            #BIOPRO_J[,c("SEQN","LBDSALSI")]
+            BIOPRO_F[,c("SEQN","LBDSALSI")],
+            BIOPRO_G[,c("SEQN","LBDSALSI")],
+            BIOPRO_H[,c("SEQN","LBDSALSI")],
+            BIOPRO_I[,c("SEQN","LBDSALSI")],
+            BIOPRO_J[,c("SEQN","LBDSALSI")]
             ) 
 
 wp_dat <- rename(.data=wp,
@@ -130,34 +130,36 @@ wp_dat <- rename(.data=wp,
                    ) 
 
 ## -------------C反应蛋白-------------
-# 使用grep的ignore.case参数来忽略大小写
-files <- list.files(pattern=".*_(CRP|HSCRP)_.*", recursive=TRUE, ignore.case=TRUE)
-cat("找到", length(files), "个文件\n")
-for(i in seq_along(files)){
-  file <- files[i]
-  cat(sprintf("正在处理第 %d/%d 个文件: %s\n", i, length(files), file))
-  # 提取DEMO_X形式的变量名
-  varname <- gsub(".*?((CRP|HSCRP)_[A-Z]).*", "\\1", file)
-  assign(varname, read.xport(file.path(file)))
+if(F){
+  # 使用grep的ignore.case参数来忽略大小写
+  files <- list.files(pattern=".*_(CRP|HSCRP)_.*", recursive=TRUE, ignore.case=TRUE)
+  cat("找到", length(files), "个文件\n")
+  for(i in seq_along(files)){
+    file <- files[i]
+    cat(sprintf("正在处理第 %d/%d 个文件: %s\n", i, length(files), file))
+    # 提取DEMO_X形式的变量名
+    varname <- gsub(".*?((CRP|HSCRP)_[A-Z]).*", "\\1", file)
+    assign(varname, read.xport(file.path(file)))
+  }
+  #因变量名不一致，因此分两次合并
+  CRP1 <-  rbind(CRP_D[,c("SEQN","LBXCRP")], #单位是mg/dL
+                 CRP_E[,c("SEQN","LBXCRP")],
+                 CRP_F[,c("SEQN","LBXCRP")])          
+  CRP1$CRP_mg_l <- CRP1$LBXCRP*10       #转化成mg/L
+  CRP1 <- CRP1[,c("SEQN","CRP_mg_l")]
+  
+  CRP2 <- rbind(HSCRP_I[,c("SEQN","LBXHSCRP","LBDHRPLC")], #mg/L
+                HSCRP_J[,c("SEQN","LBXHSCRP","LBDHRPLC")]) #最低检测值LBDHRPLC,要转化
+  CRP2$CRP_mg_l=ifelse(CRP2$LBDHRPLC==1,CRP2$LBXHSCRP/sqrt(2),CRP2$LBXHSCRP) #最低检测值转化
+  CRP2 <- CRP2[,c("SEQN","CRP_mg_l")]
+  CRP_dat <- rbind(CRP1,CRP2)
 }
-#因变量名不一致，因此分两次合并
-CRP1 <-  rbind(CRP_D[,c("SEQN","LBXCRP")], #单位是mg/dL
-               CRP_E[,c("SEQN","LBXCRP")],
-               CRP_F[,c("SEQN","LBXCRP")])          
-CRP1$CRP_mg_l <- CRP1$LBXCRP*10       #转化成mg/L
-CRP1 <- CRP1[,c("SEQN","CRP_mg_l")]
 
-CRP2 <- rbind(HSCRP_I[,c("SEQN","LBXHSCRP","LBDHRPLC")], #mg/L
-              HSCRP_J[,c("SEQN","LBXHSCRP","LBDHRPLC")]) #最低检测值LBDHRPLC,要转化
-CRP2$CRP_mg_l=ifelse(CRP2$LBDHRPLC==1,CRP2$LBXHSCRP/sqrt(2),CRP2$LBXHSCRP) #最低检测值转化
-CRP2 <- CRP2[,c("SEQN","CRP_mg_l")]
-CRP_dat <- rbind(CRP1,CRP2)
 
 # 合并为炎症数据
 library(tidyverse)
 infla_dat <- exam_dat %>%
-  full_join(wp_dat, by="SEQN") %>%
-  full_join(CRP_dat, by="SEQN")
+  full_join(wp_dat, by="SEQN") 
 
 
 # 3. 其他协变量--------------------
@@ -172,17 +174,21 @@ for(i in seq_along(files)){
   assign(varname, read.xport(file.path(file)))
 }
 
+
+ALQ_J <- rename(.data = ALQ_J, ALQ101 = ALQ290)
+
+
 ALQ <- rbind(ALQ_D[,c("SEQN","ALQ101")],
              ALQ_E[,c("SEQN","ALQ101")],
-             ALQ_F[,c("SEQN","ALQ101")]
-            #ALQ_G[,c("SEQN","LBDSALSI")],
-            #ALQ_H[,c("SEQN","LBDSALSI")],
-            #ALQ_I[,c("SEQN","LBDSALSI")],
-            #ALQ_J[,c("SEQN","LBDSALSI")]
+             ALQ_F[,c("SEQN","ALQ101")],
+             ALQ_G[,c("SEQN","ALQ101")],
+             ALQ_H[,c("SEQN","ALQ101")],
+             ALQ_I[,c("SEQN","ALQ101")],
+             ALQ_J[,c("SEQN","ALQ101")]
 ) 
 
 ALQ_dat <- rename(.data=ALQ,
-                  Drink =ALQ101 #白蛋白
+                  Drink =ALQ101 
 ) 
 
 
@@ -199,11 +205,11 @@ for(i in seq_along(files)){
 
 SMQ <- rbind(SMQ_D[,c("SEQN","SMQ020","SMQ040")],
              SMQ_E[,c("SEQN","SMQ020","SMQ040")],
-             SMQ_F[,c("SEQN","SMQ020","SMQ040")]
-             #SMQ_G[,c("SEQN","LBDSALSI")],
-             #SMQ_H[,c("SEQN","LBDSALSI")],
-             #SMQ_I[,c("SEQN","LBDSALSI")],
-             #SMQ_J[,c("SEQN","LBDSALSI")]
+             SMQ_F[,c("SEQN","SMQ020","SMQ040")],
+             SMQ_G[,c("SEQN","SMQ020","SMQ040")],
+             SMQ_H[,c("SEQN","SMQ020","SMQ040")],
+             SMQ_I[,c("SEQN","SMQ020","SMQ040")],
+             SMQ_J[,c("SEQN","SMQ020","SMQ040")]
 ) 
 
 SMQ_dat <- rename(.data=SMQ,Smoke_history=SMQ020,smoke_now=SMQ040)
@@ -211,7 +217,7 @@ SMQ_dat <- rename(.data=SMQ,Smoke_history=SMQ020,smoke_now=SMQ040)
 
 
 ## --------------BMI-------------------
-files <- list.files(pattern=".*_BMX_.*", recursive=TRUE)
+files <- list.files(pattern=".*BMX_.*", recursive=TRUE)
 cat("找到", length(files), "个文件\n")
 for(i in seq_along(files)){
   file <- files[i]
@@ -223,11 +229,11 @@ for(i in seq_along(files)){
 
 BMI <- rbind(BMX_D[,c("SEQN","BMXBMI","BMXWAIST")],
              BMX_E[,c("SEQN","BMXBMI","BMXWAIST")],
-             BMX_F[,c("SEQN","BMXBMI","BMXWAIST")]
-             #BMX_G[,c("SEQN","LBDSALSI")],
-             #BMX_H[,c("SEQN","LBDSALSI")],
-             #BMX_I[,c("SEQN","LBDSALSI")],
-             #BMX_J[,c("SEQN","LBDSALSI")]
+             BMX_F[,c("SEQN","BMXBMI","BMXWAIST")],
+             BMX_G[,c("SEQN","BMXBMI","BMXWAIST")],
+             BMX_H[,c("SEQN","BMXBMI","BMXWAIST")],
+             BMX_I[,c("SEQN","BMXBMI","BMXWAIST")],
+             BMX_J[,c("SEQN","BMXBMI","BMXWAIST")]
 ) 
 
 BMI_dat <- rename(.data=BMI, BMI=BMXBMI, WC=BMXWAIST)
@@ -243,17 +249,20 @@ for(i in seq_along(files)){
   varname <- gsub(".*?(PAQ_[A-Z]).*", "\\1", file)
   assign(varname, read.xport(file.path(file)))
 }
+# 统一列名
+PAQ_D <- PAQ_D[,c("SEQN","PAD200","PAD320")]
+PAQ_D <- rename(.data = PAQ_D, PAQ665 = PAD200, PAQ650 = PAD320)
 
-SMQ <- rbind(PAQ_D[,c("SEQN","PAQ605","PAQ650")],
-             PAQ_E[,c("SEQN","PAQ605","PAQ650")],
-             PAQ_F[,c("SEQN","PAQ605","PAQ650")]
-             #SMQ_G[,c("SEQN","LBDSALSI")],
-             #SMQ_H[,c("SEQN","LBDSALSI")],
-             #SMQ_I[,c("SEQN","LBDSALSI")],
-             #SMQ_J[,c("SEQN","LBDSALSI")]
+PAQ <- rbind(PAQ_D[,c("SEQN","PAQ650","PAQ665")],
+             PAQ_E[,c("SEQN","PAQ650","PAQ665")],
+             PAQ_F[,c("SEQN","PAQ650","PAQ665")],
+             PAQ_G[,c("SEQN","PAQ650","PAQ665")],
+             PAQ_H[,c("SEQN","PAQ650","PAQ665")],
+             PAQ_I[,c("SEQN","PAQ650","PAQ665")],
+             PAQ_J[,c("SEQN","PAQ650","PAQ665")]
 ) 
 
-SMQ_dat <- rename(.data=SMQ,JOB=PAQ605,EXERCISE=PAQ650)
+PAQ_dat <- rename(.data=PAQ,med=PAQ665,high=PAQ650)   
 
 
 
@@ -270,11 +279,11 @@ for(i in seq_along(files)){
 
 BPQ <- rbind(BPQ_D[,c("SEQN","BPQ020","BPQ080")],
              BPQ_E[,c("SEQN","BPQ020","BPQ080")],
-             BPQ_F[,c("SEQN","BPQ020","BPQ080")]
-             #BPQ_G[,c("SEQN","LBDSALSI")],
-             #BPQ_H[,c("SEQN","LBDSALSI")],
-             #BPQ_I[,c("SEQN","LBDSALSI")],
-             #BPQ_J[,c("SEQN","LBDSALSI")]
+             BPQ_F[,c("SEQN","BPQ020","BPQ080")],
+             BPQ_G[,c("SEQN","BPQ020","BPQ080")],
+             BPQ_H[,c("SEQN","BPQ020","BPQ080")],
+             BPQ_I[,c("SEQN","BPQ020","BPQ080")],
+             BPQ_J[,c("SEQN","BPQ020","BPQ080")]
 ) 
 
 BPQ_dat <- rename(.data=BPQ, hypter=BPQ020,cholesterol=BPQ080)
@@ -284,11 +293,11 @@ BPQ_dat <- rename(.data=BPQ, hypter=BPQ020,cholesterol=BPQ080)
 ####_________血压测量水平_________####
 BPX <- rbind(BPX_D[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")],
              BPX_E[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")],
-             BPX_F[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")]
-               #BPX_G[,c("SEQN","LBDSALSI")],
-               #BPX_H[,c("SEQN","LBDSALSI")],
-               #BPX_I[,c("SEQN","LBDSALSI")],
-               #BPX_J[,c("SEQN","LBDSALSI")]
+             BPX_F[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")],
+             BPX_G[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")],
+             BPX_H[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")],
+             BPX_I[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")],
+             BPX_J[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")]
 ) 
 
 BPX_dat <- BPX
@@ -308,11 +317,11 @@ for(i in seq_along(files)){
 ####_________TC_________####
 TCHOL <- rbind(TCHOL_D[,c("SEQN","LBDTCSI","LBXTC")],
                TCHOL_E[,c("SEQN","LBDTCSI","LBXTC")],
-               TCHOL_F[,c("SEQN","LBDTCSI","LBXTC")]
-             #TCHOL_G[,c("SEQN","LBDSALSI")],
-             #TCHOL_H[,c("SEQN","LBDSALSI")],
-             #TCHOL_I[,c("SEQN","LBDSALSI")],
-             #TCHOL_J[,c("SEQN","LBDSALSI")]
+               TCHOL_F[,c("SEQN","LBDTCSI","LBXTC")],
+               TCHOL_G[,c("SEQN","LBDTCSI","LBXTC")],
+               TCHOL_H[,c("SEQN","LBDTCSI","LBXTC")],
+               TCHOL_I[,c("SEQN","LBDTCSI","LBXTC")],
+               TCHOL_J[,c("SEQN","LBDTCSI","LBXTC")]
 ) 
 
 TCHOL_dat <- rename(.data=TCHOL, TC_mmol=LBDTCSI, TC_mg=LBXTC)
@@ -321,11 +330,11 @@ TCHOL_dat <- rename(.data=TCHOL, TC_mmol=LBDTCSI, TC_mg=LBXTC)
 ####_________TG_________####
 TG <- rbind(BIOPRO_D[,c("SEQN","LBDSTRSI","LBXSTR")],
                BIOPRO_E[,c("SEQN","LBDSTRSI","LBXSTR")],
-               BIOPRO_F[,c("SEQN","LBDSTRSI","LBXSTR")]
-               #BIOPRO_G[,c("SEQN","LBDSALSI")],
-               #BIOPRO_H[,c("SEQN","LBDSALSI")],
-               #BIOPRO_I[,c("SEQN","LBDSALSI")],
-               #BIOPRO_J[,c("SEQN","LBDSALSI")]
+               BIOPRO_F[,c("SEQN","LBDSTRSI","LBXSTR")],
+               BIOPRO_G[,c("SEQN","LBDSTRSI","LBXSTR")],
+               BIOPRO_H[,c("SEQN","LBDSTRSI","LBXSTR")],
+               BIOPRO_I[,c("SEQN","LBDSTRSI","LBXSTR")],
+               BIOPRO_J[,c("SEQN","LBDSTRSI","LBXSTR")]
 ) 
 
 TG_dat <- rename(.data=TG,TG_mmol=LBDSTRSI,TG_mg=LBXSTR)
@@ -333,11 +342,11 @@ TG_dat <- rename(.data=TG,TG_mmol=LBDSTRSI,TG_mg=LBXSTR)
 ####_________HDL_________####
 HDL <- rbind(HDL_D[,c("SEQN","LBDHDDSI","LBDHDD")],
              HDL_E[,c("SEQN","LBDHDDSI","LBDHDD")],
-             HDL_F[,c("SEQN","LBDHDDSI","LBDHDD")]
-                #HDL_G[,c("SEQN","LBDSALSI")],
-                #HDL_H[,c("SEQN","LBDSALSI")],
-                #HDL_I[,c("SEQN","LBDSALSI")],
-                #HDL_J[,c("SEQN","LBDSALSI")]
+             HDL_F[,c("SEQN","LBDHDDSI","LBDHDD")],
+             HDL_G[,c("SEQN","LBDHDDSI","LBDHDD")],
+             HDL_H[,c("SEQN","LBDHDDSI","LBDHDD")],
+             HDL_I[,c("SEQN","LBDHDDSI","LBDHDD")],
+             HDL_J[,c("SEQN","LBDHDDSI","LBDHDD")]
 ) 
 
 HDL_dat <- rename(.data=HDL,HDL_mmol=LBDHDDSI,HDL_mg=LBDHDD)
@@ -345,11 +354,11 @@ HDL_dat <- rename(.data=HDL,HDL_mmol=LBDHDDSI,HDL_mg=LBDHDD)
 ####__________LDL__________####
 LDL <- rbind(TRIGLY_D[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")],
              TRIGLY_E[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")],
-             TRIGLY_F[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")]
-             #TRIGLY_G[,c("SEQN","LBDSALSI")],
-             #TRIGLY_H[,c("SEQN","LBDSALSI")],
-             #TRIGLY_I[,c("SEQN","LBDSALSI")],
-             #TRIGLY_J[,c("SEQN","LBDSALSI")]
+             TRIGLY_F[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")],
+             TRIGLY_G[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")],
+             TRIGLY_H[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")],
+             TRIGLY_I[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")],
+             TRIGLY_J[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")]
 ) 
 
 LDL_dat <- rename(.data=LDL,LDL_mmol=LBDLDLSI,LDL_mg=LBDLDL,
@@ -358,63 +367,72 @@ LDL_dat <- rename(.data=LDL,LDL_mmol=LBDLDLSI,LDL_mg=LBDLDL,
 
 
 
-## --------------糖尿病 缺失数据较多-------------------
-if(F){
-  files <- list.files(pattern=".*_(DIQ|GHB|GLU)_.*", recursive=TRUE)
-  cat("找到", length(files), "个文件\n")
-  for(i in seq_along(files)){
-    file <- files[i]
-    cat(sprintf("正在处理第 %d/%d 个文件: %s\n", i, length(files), file))
-    # 提取DEMO_X形式的变量名
-    varname <- gsub(".*?((DIQ|GHB|GLU)_[A-Z]).*", "\\1", file)
-    assign(varname, read.xport(file.path(file)))
-  }
-  
-  ####__________自述+药物__________####
-  c("DIQ010","DIQ050","DID070") %in% names(DIQ_D) # 2005-2006 DID070
-  c("DIQ010","DIQ050","DID070") %in% names(DIQ_E) # 2007-2008 DID070
-  c("DIQ010","DIQ050","DIQ070") %in% names(DIQ_F) # 只有09-10的有DIQ070变量
-  
-  DIQ_F <- rename(.data = DIQ_F, DID070 = DIQ070)
-  c("DIQ010","DIQ050","DID070") %in% names(DIQ_F) # 只有09-10的有DIQ070变量
-  
-  DIQ <- rbind(DIQ_D[,c("SEQN","DIQ010","DIQ050","DID070")],
-               DIQ_E[,c("SEQN","DIQ010","DIQ050","DID070")],
-               DIQ_F[,c("SEQN","DIQ010","DIQ050","DID070")]
-               #DIQ_G[,c("SEQN","LBDSALSI")],
-               #DIQ_H[,c("SEQN","LBDSALSI")],
-               #DIQ_I[,c("SEQN","LBDSALSI")],
-               #DIQ_J[,c("SEQN","LBDSALSI")]
-  ) 
-  
-  DIQ_dat <- rename(.data=DIQ, Diabetes1=DIQ010,#医生告诉你有糖尿病
-                    Insulin=DIQ050,  #服用胰岛素
-                    Sugar=DID070) #服用糖尿病药降低血糖
-  
-  ####__________血糖 & 血红蛋白__________####
-  GHB <- rbind(GHB_D[,c("SEQN","LBXGH")],
-               GHB_E[,c("SEQN","LBXGH")],
-               GHB_F[,c("SEQN","LBXGH")]
-               #GHB_G[,c("SEQN","LBDSALSI")],
-               #GHB_H[,c("SEQN","LBDSALSI")],
-               #GHB_I[,c("SEQN","LBDSALSI")],
-               #GHB_J[,c("SEQN","LBDSALSI")]
-  ) 
-  
-  GHB_dat <- rename(.data=GHB,Glycohemoglobin=LBXGH) 
-  
-  GLU <- rbind(GLU_D[,c("SEQN","LBXGLU","WTSAF2YR")],
-               GLU_E[,c("SEQN","LBXGLU","WTSAF2YR")],
-               GLU_F[,c("SEQN","LBXGLU","WTSAF2YR")] # 子样本权重
-               #GLU_G[,c("SEQN","LBDSALSI")],
-               #GLU_H[,c("SEQN","LBDSALSI")],
-               #GLU_I[,c("SEQN","LBDSALSI")],
-               #GLU_J[,c("SEQN","LBDSALSI")]
-  ) 
-  
-  GLU_dat <- rename(.data=GLU,Glucose=LBXGLU,wt_glu=WTSAF2YR) 
-  
+## --------------糖尿病 -------------------
+
+files <- list.files(pattern=".*_(DIQ|GHB|GLU)_.*", recursive=TRUE)
+cat("找到", length(files), "个文件\n")
+for(i in seq_along(files)){
+  file <- files[i]
+  cat(sprintf("正在处理第 %d/%d 个文件: %s\n", i, length(files), file))
+  # 提取DEMO_X形式的变量名
+  varname <- gsub(".*?((DIQ|GHB|GLU)_[A-Z]).*", "\\1", file)
+  assign(varname, read.xport(file.path(file)))
 }
+
+####__________自述+药物__________####
+c("DIQ010","DIQ050","DID070") %in% names(DIQ_D) # 2005-2006 DID070
+c("DIQ010","DIQ050","DID070") %in% names(DIQ_E) # 2007-2008 DID070
+c("DIQ010","DIQ050","DIQ070") %in% names(DIQ_F) # 只有09-10的有DIQ070变量
+c("DIQ010","DIQ050","DID070") %in% names(DIQ_G) # 
+c("DIQ010","DIQ050","DID070") %in% names(DIQ_H) # 
+c("DIQ010","DIQ050","DIQ070") %in% names(DIQ_I) # 
+c("DIQ010","DIQ050","DIQ070") %in% names(DIQ_J) # 
+
+
+DIQ_F <- rename(.data = DIQ_F, DID070 = DIQ070)
+DIQ_G <- rename(.data = DIQ_G, DID070 = DIQ070)
+DIQ_H <- rename(.data = DIQ_H, DID070 = DIQ070)
+DIQ_I <- rename(.data = DIQ_I, DID070 = DIQ070)
+DIQ_J <- rename(.data = DIQ_J, DID070 = DIQ070)
+c("DIQ010","DIQ050","DID070") %in% names(DIQ_F) # 只有09后的有DIQ070变量
+
+DIQ <- rbind(DIQ_D[,c("SEQN","DIQ010","DIQ050","DID070")],
+             DIQ_E[,c("SEQN","DIQ010","DIQ050","DID070")],
+             DIQ_F[,c("SEQN","DIQ010","DIQ050","DID070")],
+             DIQ_G[,c("SEQN","DIQ010","DIQ050","DID070")],
+             DIQ_H[,c("SEQN","DIQ010","DIQ050","DID070")],
+             DIQ_I[,c("SEQN","DIQ010","DIQ050","DID070")],
+             DIQ_J[,c("SEQN","DIQ010","DIQ050","DID070")]
+) 
+
+DIQ_dat <- rename(.data=DIQ, Diabetes1=DIQ010,#医生告诉你有糖尿病
+                  Insulin=DIQ050,  #服用胰岛素
+                  Sugar=DID070) #服用糖尿病药降低血糖
+
+####__________血糖 & 血红蛋白__________####
+GHB <- rbind(GHB_D[,c("SEQN","LBXGH")],
+             GHB_E[,c("SEQN","LBXGH")],
+             GHB_F[,c("SEQN","LBXGH")],
+             GHB_G[,c("SEQN","LBXGH")],
+             GHB_H[,c("SEQN","LBXGH")],
+             GHB_I[,c("SEQN","LBXGH")],
+             GHB_J[,c("SEQN","LBXGH")]
+) 
+
+GHB_dat <- rename(.data=GHB,Glycohemoglobin=LBXGH) 
+
+GLU <- rbind(GLU_D[,c("SEQN","LBXGLU","WTSAF2YR")],
+             GLU_E[,c("SEQN","LBXGLU","WTSAF2YR")],
+             GLU_F[,c("SEQN","LBXGLU","WTSAF2YR")], # 子样本权重
+             GLU_G[,c("SEQN","LBXGLU","WTSAF2YR")],
+             GLU_H[,c("SEQN","LBXGLU","WTSAF2YR")],
+             GLU_I[,c("SEQN","LBXGLU","WTSAF2YR")],
+             GLU_J[,c("SEQN","LBXGLU","WTSAF2YR")]
+) 
+
+GLU_dat <- rename(.data=GLU,Glucose=LBXGLU,wt_glu=WTSAF2YR) 
+  
+
 
 
 
@@ -435,11 +453,11 @@ for(i in seq_along(files)){
 ####__________冠心病 心肌梗死 中风__________####
 MCQ <- rbind(MCQ_D[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")],
              MCQ_E[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")],
-             MCQ_F[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")]
-             #MCQ_G[,c("SEQN","LBDSALSI")],
-             #MCQ_H[,c("SEQN","LBDSALSI")],
-             #MCQ_I[,c("SEQN","LBDSALSI")],
-             #MCQ_J[,c("SEQN","LBDSALSI")]
+             MCQ_F[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")],
+             MCQ_G[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")],
+             MCQ_H[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")],
+             MCQ_I[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")],
+             MCQ_J[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")]
 ) 
 
 MCQ_dat <- rename(.data=MCQ, CHD=MCQ160C, MI=MCQ160E, Stroke=MCQ160F) 
@@ -461,11 +479,11 @@ c("SEQN","RHQ074","RHD143","RHQ200","RHD280","RHQ305") %in% names(RHQ_F)
 
 RHQ <- rbind(RHQ_D[,c("SEQN","RHD143","RHQ200")],
              RHQ_E[,c("SEQN","RHD143","RHQ200")],
-             RHQ_F[,c("SEQN","RHD143","RHQ200")]
-               #RHQ_G[,c("SEQN","LBDSALSI")],
-               #RHQ_H[,c("SEQN","LBDSALSI")],
-               #RHQ_I[,c("SEQN","LBDSALSI")],
-               #RHQ_J[,c("SEQN","LBDSALSI")]
+             RHQ_F[,c("SEQN","RHD143","RHQ200")],
+             RHQ_G[,c("SEQN","RHD143","RHQ200")],
+             RHQ_H[,c("SEQN","RHD143","RHQ200")],
+             RHQ_I[,c("SEQN","RHD143","RHQ200")],
+             RHQ_J[,c("SEQN","RHD143","RHQ200")]
             )
 
 RHQ_dat <- rename(.data=RHQ,
@@ -506,148 +524,8 @@ for (i in 2:length(dat_list)) {
 }
 
 merged_dat <- Reduce(function(x, y) merge(x, y, by = "SEQN", all.x = TRUE), dat_list)
+dim(merged_dat)
+# [1] 39346    57
 
 
-
-# 5. 进行纳排--------------
-if(F){
-
-  data00 <- merged_dat # 16539
-  str(data00)
-
-  ### (1) 人口统计学不符合条件-----------
-  ####__________年龄####
-  data01 <- subset(data00,data00$Age>=20 & data00$Age<=85) # 16539
-
-  ####__________怀孕女性####
-  table(data01$Pregnancy,useNA = "ifany")  # 缺失的数据体现出来 387 怀孕 
-  # data04 <- subset(data03,data03$Pregnancy!=1) #此语句会把缺失也排除
-  data02 <- subset(data01,data01$Pregnancy %in% c(2,9,NA)) #排除了正在怀孕的女性
-  # 16152
-
-  ####__________家庭怕贫困指数####
-  # 第一篇参考的文献没有排除PIR缺失的样本
-  # table(data01$PIR,useNA = "ifany")
-
-  ### (2) 所有自变量存在缺失-----------
-  ####__________RDW缺失####
-  summary(data02$RDW) # 缺失 897
-  data03 <- subset(data02,!is.na(data02$RDW)) # 15255
-
-  ####__________白蛋白缺失####
-  summary(data03$albumin) # 缺失 201
-  data04 <- subset(data03,!is.na(data03$albumin)) # 15054
-
-
-  ####__________CRP缺失####
-  # summary(data04$CRP_mg_l) # 缺失 4
-  # data05 <- subset(data04,!is.na(data04$CRP_mg_l)) 
-
-  ### (3) 所有协变量存在缺失-----------
-  ####__________BMI缺失####
-  summary(data04$BMI) #可以发现，缺失了 200
-  data05 <- subset(data04,!is.na(data04$BMI)) # 14854
-
-  ####__________饮酒缺失####
-  summary(data05$Drink) #可以发现，缺失了 1197
-  data06 <- subset(data05,!is.na(data05$Drink)) # 13657
-
-  ####__________吸烟####
-  summary(data06$Smoke_history) #可以发现，缺失了 0
-  summary(data06$smoke_now) #可以发现，缺失了 7114
-  data07 <- subset(data06,!(is.na(data06$Smoke_history) | is.na(data06$smoke_now)))
-  # 6543
-
-  ####__________糖尿病####
-  if(F){
-    summary(data07$Sugar) #可以发现，缺失了 5339
-    summary(data07$Glycohemoglobin) #可以发现，缺失了 12
-    summary(data07$Diabetes1) #可以发现，缺失了 0
-    summary(data07$Insulin) #可以发现，缺失了 0
-    summary(data07$Glucose) #可以发现，缺失了 3418
-    data08 <- subset(data07,
-                    !(is.na(data07$Sugar) | is.na(data07$Glycohemoglobin) |
-                        is.na(data07$Glucose))) # 600
-    
-  }
-
-  ####__________冠心病####
-  summary(data07$CHD) #可以发现，缺失了 0
-  data08 <- subset(data07,!is.na(data07$CHD)) # 6543
-
-
-  ####__________高血压####
-  summary(data08$hypter) #可以发现，缺失了 0
-  data09 <- subset(data08,!is.na(data08$hypter)) # 6543
-
-
-
-  ####__________高血脂####
-  summary(data09$cholesterol) #可以发现，缺失了 1926
-  data10 <- subset(data09,!is.na(data09$cholesterol)) # 4617
-
-
-
-
-  ### (4) 所有因变量存在缺失-----------
-  summary(data10$MI) #可以发现，缺失了 0
-  data11 <- subset(data10,!is.na(data10$MI))
-  nrow(data11)  # 4617
-
-  write.csv(data11, "mergeData.csv")
-}
-
-# 5. 数据筛选 --------------
-# 定义筛选条件函数
-filter_conditions <- function(data) {
-  # 年龄条件
-  age_condition <- data$Age >= 20 & data$Age <= 85
-  
-  # 怀孕条件 (2=否, 9=不知道, NA=缺失)
-  pregnancy_condition <- data$Pregnancy %in% c(2, 9, NA)
-  
-  return(age_condition & pregnancy_condition)
-}
-
-# 定义需要检查缺失值的变量列表
-vars_to_check <- list(
-  # 自变量
-  independent = c("RDW", "albumin"),
-  
-  # 协变量
-  covariates = c("BMI", "Drink", "Smoke_history", "smoke_now", 
-                 "CHD", "hypter", "cholesterol"),
-  
-  # 因变量
-  dependent = c("MI")
-)
-
-# 数据筛选主函数
-clean_data <- function(data, filter_func, vars_list) {
-  # 1. 应用基本筛选条件
-  data <- data[filter_func(data), ]
-  cat(sprintf("基本条件筛选后样本量: %d\n", nrow(data)))
-  
-  # 2. 逐个检查变量的缺失值
-  for (category in names(vars_list)) {
-    cat(sprintf("\n检查%s变量的缺失值:\n", category))
-    
-    for (var in vars_list[[category]]) {
-      n_before <- nrow(data)
-      data <- data[!is.na(data[[var]]), ]
-      n_after <- nrow(data)
-      n_missing <- n_before - n_after
-      
-      cat(sprintf("%s: 删除 %d 个缺失值, 剩余样本量 %d\n", 
-                  var, n_missing, n_after))
-    }
-  }
-  
-  return(data)
-}
-
-# 执行数据清洗
-data_clean <- clean_data(merged_dat, filter_conditions, vars_to_check)
-
-# 保存结果
-write.csv(data_clean, "mergeData.csv", row.names = FALSE)
+write.csv(merged_dat, "mergeData.csv", row.names = FALSE)
