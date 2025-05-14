@@ -73,7 +73,59 @@ DEMO_dat1 <- rename(.data=DEMO,
 DEMO_dat<-full_join(DEMO_dat1,wt_dat,by="SEQN")
 
 
-# 2. 炎症数据-------------
+# 2. 自变量（暴露数据）-------------
+files <- list.files(pattern=".*_(DR1TOT|DR2TOT)_.*", recursive=TRUE)
+cat("找到", length(files), "个文件\n")
+for(i in seq_along(files)){
+  file <- files[i]
+  cat(sprintf("正在处理第 %d/%d 个文件: %s\n", i, length(files), file))
+  # 提取DEMO_X形式的变量名
+  varname <- gsub(".*?((DR1TOT|DR2TOT)_[A-Z]).*", "\\1", file)
+  assign(varname, read.xport(file.path(file)))
+}
+
+
+DR1 <- rbind(DR1TOT_D[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
+              DR1TOT_E[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
+              DR1TOT_F[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
+              DR1TOT_G[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
+              DR1TOT_H[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
+              DR1TOT_I[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
+              DR1TOT_J[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")]
+) 
+
+DR1_dat <- rename(.data=DR1,
+                   VA1=DR1TVARA, #中性粒细胞
+                   VC1=DR1TVC, #淋巴细胞
+                   VE1=DR1TATOC, #单核细胞
+                  zinc1=DR1TZINC, #血小板计数 SI（1000 个细胞/微升）
+                  selenium1=DR1TSELE,
+                  carotenoids1=DR1TBCAR,
+                  wt_DR1 = WTDRD1
+) 
+
+#######    D2
+DR2 <- rbind(DR2TOT_D[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")],
+             DR2TOT_E[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")],
+             DR2TOT_F[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")],
+             DR2TOT_G[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")],
+             DR2TOT_H[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")],
+             DR2TOT_I[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")],
+             DR2TOT_J[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")]
+) 
+
+DR2_dat <- rename(.data=DR2,
+                  VA2=DR2TVARA, 
+                  VC2=DR2TVC, 
+                  VE2=DR2TATOC, 
+                  zinc2=DR2TZINC, 
+                  selenium2=DR2TSELE,
+                  carotenoids2=DR2TBCAR,
+                  wt_DR2=WTDR2D
+) 
+
+
+# 3. 其他协变量--------------------
 
 ## -------------淋巴细胞 中性粒细胞 血小板 单核细胞 红细胞分布宽度-------------
 files <- list.files(pattern=".*_CBC_.*", recursive=TRUE)
@@ -94,7 +146,7 @@ exam <- rbind(CBC_D[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW"
               CBC_H[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
               CBC_I[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
               CBC_J[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")]
-              ) 
+) 
 
 exam_dat <- rename(.data=exam,
                    Neutrophils=LBDNENO, #中性粒细胞
@@ -102,7 +154,7 @@ exam_dat <- rename(.data=exam,
                    Monocytes=LBDMONO, #单核细胞
                    Platelets=LBXPLTSI, #血小板计数 SI（1000 个细胞/微升）
                    RDW=LBXRDW
-                   ) 
+) 
 
 
 ## -------------白蛋白-------------
@@ -123,11 +175,11 @@ wp <- rbind(BIOPRO_D[,c("SEQN","LBDSALSI")],
             BIOPRO_H[,c("SEQN","LBDSALSI")],
             BIOPRO_I[,c("SEQN","LBDSALSI")],
             BIOPRO_J[,c("SEQN","LBDSALSI")]
-            ) 
+) 
 
 wp_dat <- rename(.data=wp,
-                   albumin =LBDSALSI #白蛋白
-                   ) 
+                 albumin =LBDSALSI #白蛋白
+) 
 
 ## -------------C反应蛋白-------------
 if(F){
@@ -156,13 +208,9 @@ if(F){
 }
 
 
-# 合并为炎症数据
-library(tidyverse)
-infla_dat <- exam_dat %>%
-  full_join(wp_dat, by="SEQN") 
 
 
-# 3. 其他协变量--------------------
+
 ## --------------饮酒-------------------
 files <- list.files(pattern=".*_ALQ_.*", recursive=TRUE)
 cat("找到", length(files), "个文件\n")

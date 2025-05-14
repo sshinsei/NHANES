@@ -5,6 +5,8 @@ setwd('./03_results')
 library(survey)
 library(dplyr)
 library(forestplot)
+library(rms)
+library(ggplot2)
 
 # load functions
 source("../functions.R")
@@ -70,28 +72,28 @@ paste0(freq," (",sprintf("%0.2f",per),")")
 options(survey.lonely.psu = "adjust")
 
 ##### 四分位数分组 ###########
-RAR_m <- svyquantile(~RAR,study_design,c(0.25,0.5,0.75))
-RAR_m
+CDAI_m <- svyquantile(~CDAI,study_design,c(0.25,0.5,0.75))
+CDAI_m
 
-RAR_q <- quantile(new_dat$RAR_log, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
-new_dat$RAR_q4 <- cut(new_dat$RAR_log,
-                       breaks = c(-Inf, RAR_q[1], RAR_q[2], RAR_q[3], Inf),
+CDAI_q <- quantile(new_dat$CDAI, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+new_dat$CDAI_q4 <- cut(new_dat$CDAI,
+                       breaks = c(-Inf, CDAI_q[1], CDAI_q[2], CDAI_q[3], Inf),
                        labels = c("Q1","Q2","Q3","Q4"),
                        right = TRUE,
                        include.lowest = TRUE)
 
 
-new_dat$RAR_q4 <- factor(new_dat$RAR_q4,
+new_dat$CDAI_q4 <- factor(new_dat$CDAI_q4,
                         levels = c("Q1","Q2","Q3","Q4"))
-table(new_dat$RAR_q4)
+table(new_dat$CDAI_q4)
 # Q1   Q2   Q3   Q4 
-# 7469 7448 7424 7433 
+# 6496 6496 6496 6496
 
 #转化参照
-# new_dat$RAR_q4 <- relevel(new_dat$RAR_q4,"Q4") # Q4为reference
+# new_dat$CDAI_q4 <- relevel(new_dat$CDAI_q4,"Q4") # Q4为reference
 table(new_dat$MI)
 #   0    1 
-# 28437  1337 
+# 28135  1314  
 
 #转化结局的编码
 new_dat$status <- new_dat$MI
@@ -105,17 +107,17 @@ study_design <- svydesign(data=new_dat,
 
 
 #### _________四分位数分组进行回归 ####
-mod1 <- svyglm(status~RAR_q4, study_design,family = quasibinomial)
+mod1 <- svyglm(status~CDAI_q4, study_design,family = quasibinomial)
 summary(mod1)
 results_mod1 <- extract_regression_results(mod1, "model1")
 
-mod2 <- svyglm(status~RAR_q4+Age+Race+EDUcation+PIR+Gender, 
+mod2 <- svyglm(status~CDAI_q4+Age+Race+EDUcation+PIR+Gender, 
                    study_design,family = quasibinomial)
 summary(mod2)
 results_mod2 <- extract_regression_results(mod2, "model2")
 
 mod3 <- svyglm(as.formula(
-  paste0("status~RAR_q4+",paste(covariates, collapse = " + "))), 
+  paste0("status~CDAI_q4+",paste(covariates, collapse = " + "))), 
                    study_design,family = quasibinomial)
 summary(mod3)
 results_mod3 <- extract_regression_results(mod3, "model3")
@@ -131,12 +133,12 @@ print(results_mod3)
 
 
 ######## ______趋势分析 ######
-table(new_dat$RAR)
-RAR_q
-new_dat$RAR_log_T <- ifelse(new_dat$RAR_log < -1.25,1,
-                       ifelse(new_dat$RAR_log < -1.17,2,
-                              ifelse(new_dat$RAR_log < -1.08,3,4)))
-table(new_dat$RAR_log_T)
+table(new_dat$CDAI)
+CDAI_q
+new_dat$CDAI_T <- ifelse(new_dat$CDAI < -2.57,1,
+                       ifelse(new_dat$CDAI < -0.626,2,
+                              ifelse(new_dat$CDAI < 1.842,3,4)))
+table(new_dat$CDAI_T)
 # 1    2    3    4 
 # 7250 7933 7233 7358 
 
@@ -146,17 +148,17 @@ study_design <- svydesign(data=new_dat,
                           strata=~SDMVSTRA, 
                           weights=~wt, nest=TRUE)
 
-Tmod1 <- svyglm(status~RAR_log_T, study_design,family = quasibinomial)
+Tmod1 <- svyglm(status~CDAI_T, study_design,family = quasibinomial)
 summary(Tmod1)
 results_Tmod1 <- extract_regression_results(Tmod1, "Tmodel1")
 
-Tmod2 <- svyglm(status~RAR_log_T+
+Tmod2 <- svyglm(status~CDAI_T+
                           Age+Race+EDUcation+PIR+Gender, 
                         study_design,family = quasibinomial)
 summary(Tmod2)
 results_Tmod2 <- extract_regression_results(Tmod2, "Tmodel2")
 
-formula_str <- paste0("status ~ RAR_log_T + ", paste(covariates, collapse = " + "))
+formula_str <- paste0("status ~ CDAI_T + ", paste(covariates, collapse = " + "))
 Tmod3 <- svyglm(as.formula(formula_str),
                 design = study_design,
                 family = quasibinomial)
@@ -164,31 +166,31 @@ summary(Tmod3)
 results_Tmod3 <- extract_regression_results(Tmod3, "Tmodel3")
 
 
-####  _______ 自变量为连续变量分析_________ ####
+####  _______ 自变量作为连续变量分析_________ ####
 study_design <- svydesign(data=new_dat, 
                           id=~SDMVPSU, 
                           strata=~SDMVSTRA, 
                           weights=~wt, nest=TRUE)
 
 #### 单因素线性回归 ####
-mod <- svyglm(MI~RAR, study_design)
+mod <- svyglm(MI~CDAI, study_design)
 summary(mod)
 
 
 #### continuous mod1 ####
-Cmod1 <- svyglm(MI~RAR, study_design, family="quasibinomial")
+Cmod1 <- svyglm(MI~CDAI, study_design, family="quasibinomial")
 summary(Cmod1)
 
 
 #### continuous mod2 ####
-Cmod2 <- svyglm(MI~RAR+Age + Race + EDUcation + 
+Cmod2 <- svyglm(MI~CDAI+Age + Race + EDUcation + 
                      PIR, study_design, family="quasibinomial")
 summary(Cmod2)
 
 
 ####  continuous mod3 #####
 Cmod3 <- svyglm(as.formula(
-  paste0("status~RAR+",paste(covariates, collapse = " + "))), 
+  paste0("status~CDAI+",paste(covariates, collapse = " + "))), 
                 study_design, family="quasibinomial")
 summary(Cmod3)
 
@@ -202,7 +204,7 @@ study_design <- svydesign(data=new_dat,
                           weights=~wt, nest=TRUE)
 
 # 模型用到的所有自变量
-model_vars <- c("RAR", "Age", "Race", "EDUcation", 
+model_vars <- c("CDAI", "Age", "Race", "EDUcation", 
                 "PIR", "Gender", "BMI", "Smoke", "DM",
                 "hyptersion", "Stroke", "lipids","Marital","pa")
 
@@ -211,18 +213,18 @@ sapply(new_dat[, model_vars], function(x) sum(is.na(x)))
 
 # 全调整模型
 mod3 <- svyglm(as.formula(
-  paste0("status~RAR+",paste(covariates, collapse = " + "))), 
+  paste0("status~CDAI+",paste(covariates, collapse = " + "))), 
                    study_design,family = quasibinomial)
 
 # 预测概率
 new_dat$predicted_prob <- predict(mod3, newdata = new_dat, type = "response")
 
-library(ggplot2)
+
 
 # 绘制平滑曲线
-ggplot(new_dat, aes(x = RAR, y = predicted_prob)) +
+ggplot(new_dat, aes(x = CDAI, y = predicted_prob)) +
   geom_smooth(method = "loess", se = TRUE, color = "blue") +
-  labs(x = "RAR", y = "forcasted probe", 
+  labs(x = "CDAI", y = "forcasted probe", 
        title = "") +
   theme_bw()+
   theme(panel.grid.major = element_blank(),
@@ -235,7 +237,7 @@ ggsave("smooth_plot.pdf", width = 8, height = 6, dpi = 300)
 # -------------- 3. RCS分析 -----------------
 ## 使用全调整模型进行RCS分析
 
-library(rms)
+
 
 # 准备数据
 data <- new_dat
@@ -258,21 +260,21 @@ data[factor_vars] <- lapply(data[factor_vars], as.factor)
 
 # 3个结点
 fit.rcs3 <- Glm(as.formula(
-  paste0("status~","rcs(RAR,3)","+",paste(covariates, collapse = " + "))), 
+  paste0("status~","rcs(CDAI,3)","+",paste(covariates, collapse = " + "))), 
                 data=data, family="quasibinomial", 
                 weights=weights)
 
 
 # 4个结点
 fit.rcs4 <- Glm(as.formula(
-  paste0("status~","rcs(RAR,4)","+",paste(covariates, collapse = " + "))), 
+  paste0("status~","rcs(CDAI,4)","+",paste(covariates, collapse = " + "))), 
                 data=data, family="quasibinomial", 
                 weights=weights)
 
 
 # 5个结点
 fit.rcs5 <- Glm(as.formula(
-  paste0("status~","rcs(RAR,5)","+",paste(covariates, collapse = " + "))), 
+  paste0("status~","rcs(CDAI,5)","+",paste(covariates, collapse = " + "))), 
                 data=data, family="quasibinomial", 
                 weights=weights)
 
@@ -291,24 +293,24 @@ models_comparison <- data.frame(
 print(models_comparison)
 
 # 计算三个模型的OR并绘图比较
-OR3 <- Predict(fit.rcs3, RAR, type="predictions", fun=exp, ref.zero=TRUE)
-OR4 <- Predict(fit.rcs4, RAR, type="predictions", fun=exp, ref.zero=TRUE)
-OR5 <- Predict(fit.rcs5, RAR, type="predictions", fun=exp, ref.zero=TRUE)
+OR3 <- Predict(fit.rcs3, CDAI, type="predictions", fun=exp, ref.zero=TRUE)
+OR4 <- Predict(fit.rcs4, CDAI, type="predictions", fun=exp, ref.zero=TRUE)
+OR5 <- Predict(fit.rcs5, CDAI, type="predictions", fun=exp, ref.zero=TRUE)
 
 
 # 绘制三个模型的OR曲线比较
 p <- ggplot() +
-  geom_line(data=OR3, aes(x=RAR, y=yhat, color="3 knots"), 
+  geom_line(data=OR3, aes(x=CDAI, y=yhat, color="3 knots"), 
             linetype="solid", size=1, alpha=0.7) +
-  geom_line(data=OR4, aes(x=RAR, y=yhat, color="4 knots"), 
+  geom_line(data=OR4, aes(x=CDAI, y=yhat, color="4 knots"), 
             linetype="solid", size=1, alpha=0.7) +
-  geom_line(data=OR5, aes(x=RAR, y=yhat, color="5 knots"), 
+  geom_line(data=OR5, aes(x=CDAI, y=yhat, color="5 knots"), 
             linetype="solid", size=1, alpha=0.7) +
-  geom_ribbon(data=OR4, aes(x=RAR, ymin=lower, ymax=upper), 
+  geom_ribbon(data=OR4, aes(x=CDAI, ymin=lower, ymax=upper), 
               alpha=0.1, fill="grey") +
   geom_hline(yintercept=1, linetype=2, color="grey") +
   scale_color_manual(values=c("3 knots"="#77bbdd", "4 knots"="#ff8899", "5 knots"="#ffdd88")) +
-  labs(x = "RAR", y = "OR (95% CI)", 
+  labs(x = "CDAI", y = "OR (95% CI)", 
        title = "比较不同结点数的RCS模型",
        color = "结点数") +
   theme_bw() +
@@ -331,14 +333,14 @@ cat("2. 非线性效应 P =", round(nonlin_test[2,"P"], 4), "\n") # 0.0507
 # 保存最佳的RCS图
 # 绘制三个模型的OR曲线比较
 p1 <- ggplot() +
-  geom_line(data=OR3, aes(x=RAR, y=yhat,), 
+  geom_line(data=OR3, aes(x=CDAI, y=yhat,), 
             linetype="solid", size=1, alpha=0.7,color="blue") +
-  geom_ribbon(data=OR3, aes(x=RAR, ymin=lower, ymax=upper), 
+  geom_ribbon(data=OR3, aes(x=CDAI, ymin=lower, ymax=upper), 
               alpha=0.1, fill="grey") +
   geom_hline(yintercept=1, linetype=2, color="grey") +
   geom_text(aes(x=0.3,y=7.5,
                 label = paste0("p for nonlinear = ",round(nonlin_test[2,"P"], 4))))+
-  labs(x = "RAR", y = "OR (95% CI)") +
+  labs(x = "CDAI", y = "OR (95% CI)") +
   theme_bw() +
   theme(axis.line=element_line(),
         panel.grid=element_blank(),
@@ -364,7 +366,7 @@ covariates <- c("Age", "Race", "EDUcation",
 result <- weighted_segmented_regression_nhanes(
   data = new_dat,
   y_var = "MI",
-  x_var = "RAR",
+  x_var = "CDAI",
   covariates = covariates
 )
 
@@ -375,7 +377,7 @@ write.table(as.data.frame(result[["table"]]), "Threshold_results.csv",sep=",",
 # 使用获得的阈值点绘制分段拟合图
 p2 <- plot_segmented_fit(
   data = new_dat,
-  x_var = "RAR",
+  x_var = "CDAI",
   y_var = "MI",
   cutpoint = result$cutpoint,
   covariates = covariates,
@@ -389,9 +391,9 @@ ggsave("segmented_regression_plot.pdf", p2, width = 8, height = 6, dpi = 300)
 
 ##### ________平滑曲线添加拐点画图___________ #######
 
-p3 <- ggplot(new_dat, aes(x = RAR, y = predicted_prob)) +
+p3 <- ggplot(new_dat, aes(x = CDAI, y = predicted_prob)) +
   geom_smooth(method = "loess", se = TRUE, color = "blue") +
-  labs(x = "RAR", y = "forcasted probe",
+  labs(x = "CDAI", y = "forcasted probe",
        title = "") +
   geom_vline(xintercept = result$cutpoint,
              linetype = "dashed",
@@ -418,7 +420,7 @@ gender_results <- perform_subgroup_analysis(
   data = new_dat,
   group_var = "Gender",           # 分组变量：性别
   outcome_vars = "status",        # 因变量：疾病状态
-  exposure_vars = "RAR",      # 自变量：对数转换后的RAR
+  exposure_vars = "CDAI",      # 自变量：对数转换后的CDAI
   covariates = c(                 # 协变量清单
     "Age", "Race", "EDUcation", 
     "PIR", "Gender", "BMI", "Smoke", 
@@ -437,7 +439,7 @@ age_results <- perform_subgroup_analysis(
   data = new_dat,
   group_var = "Age_cat",           # 分组变量：性别
   outcome_vars = "status",        # 因变量：疾病状态
-  exposure_vars = "RAR",      # 自变量：对数转换后的RAR
+  exposure_vars = "CDAI",      # 自变量：对数转换后的CDAI
   covariates = c(                 # 协变量清单
     "Age", "Race", "EDUcation", 
     "PIR", "Gender", "BMI", "Smoke", 
@@ -457,7 +459,7 @@ BMI_results <- perform_subgroup_analysis(
   data = new_dat,
   group_var = "BMI_cat",           # 分组变量
   outcome_vars = "status",        # 因变量：疾病状态
-  exposure_vars = "RAR",      # 自变量：对数转换后的RAR
+  exposure_vars = "CDAI",      # 自变量：对数转换后的CDAI
   covariates = c(                 # 协变量清单
     "Age", "Race", "EDUcation", 
     "PIR", "Gender", "BMI", "Smoke", 
@@ -477,7 +479,7 @@ RACE_results <- perform_subgroup_analysis(
   data = new_dat,
   group_var = "Race",           # 分组变量：性别
   outcome_vars = "status",        # 因变量：疾病状态
-  exposure_vars = "RAR",      # 自变量：对数转换后的RAR
+  exposure_vars = "CDAI",      # 自变量：对数转换后的CDAI
   covariates = c(                 # 协变量清单
     "Age", "Race", "EDUcation", 
     "PIR", "Gender", "BMI", "Smoke", 
@@ -496,7 +498,7 @@ Smoke_results <- perform_subgroup_analysis(
   data = new_dat,
   group_var = "Smoke",           # 分组变量：性别
   outcome_vars = "status",        # 因变量：疾病状态
-  exposure_vars = "RAR",      # 自变量：对数转换后的RAR
+  exposure_vars = "CDAI",      # 自变量：对数转换后的CDAI
   covariates = c(                 # 协变量清单
     "Age", "Race", "EDUcation", 
     "PIR", "Gender", "BMI", "Smoke", 
@@ -516,7 +518,7 @@ PA_results <- perform_subgroup_analysis(
   data = new_dat,
   group_var = "pa",           # 分组变量：性别
   outcome_vars = "status",        # 因变量：疾病状态
-  exposure_vars = "RAR",      # 自变量：对数转换后的RAR
+  exposure_vars = "CDAI",      # 自变量：对数转换后的CDAI
   covariates = c(                 # 协变量清单
     "Age", "Race", "EDUcation", 
     "PIR", "Gender", "BMI", "Smoke", 

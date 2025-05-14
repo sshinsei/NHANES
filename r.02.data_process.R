@@ -29,6 +29,7 @@ cat(sprintf("基本条件筛选后样本量: %d\n", nrow(dat)))
 # 怀孕状态筛选后样本量: 32397  (删除 523  个样本)
 
 
+
 ####__________年龄#### 
 dat$Age_cat <- ifelse(dat$Age<=60, 1, 2)
 #加标签
@@ -106,7 +107,7 @@ dat$EDUcation <- factor(dat$EDUcation,c(1,2,3),
                                            "High School or above",
                                            NA))
 table(dat$EDUcation,useNA = "ifany") 
-
+dat <- subset(dat, select=-c(EDUcation2,EDUcation3))
 
 ####__________PIR####
 summary(dat$PIR) #可以发现，缺失了 3629
@@ -242,7 +243,7 @@ dat$lipids <- ifelse(dat$TC_mg>200 |
                            dat$cholesterol==1,1,0)
 # dat$lipids <- ifelse(dat$lipids == 1, 1,0)
 table(dat$lipids,useNA = "ifany") # 2691
-  
+dat <- subset(dat, select=-c(TC_mg,TG_mg,HDL_mg,LDL_mg,cholesterol))  
 
 
 ####__________SBP####
@@ -318,13 +319,13 @@ dat <- subset(dat,
 table(dat$hypter,useNA = "ifany")
 #需要综合：
 #  高血压
-#  SBP>=130 40130253
-#  DBP>=80 40130253
+#  SBP>=140 
+#  DBP>=90 
 summary(dat$SBP) #查看变量的分布
 dat$SBP_new <- ifelse(is.na(dat$SBP),0,dat$SBP) #将缺失赋值为0
 summary(dat$DBP) #查看变量的分布
 dat$DBP_new <- ifelse(is.na(dat$DBP),0,dat$DBP) #将缺失赋值为0
-dat$hyptersion <- ifelse(dat$hypter==1|dat$SBP_new>=130|dat$DBP_new>=80,1,2)
+dat$hyptersion <- ifelse(dat$hypter==1|dat$SBP_new>=140|dat$DBP_new>=90,1,2)
 dat$hyptersion <- factor(dat$hyptersion,levels = c(1,2),labels = c("Yes","No"))
 table(dat$hyptersion,useNA = "ifany")
 dat <- subset(dat, select=-c(hypter,SBP_new,DBP_new))
@@ -377,16 +378,45 @@ str(dat)
 
 
 # 自变量----------------
-# RAR  = (中性粒细胞 (NEU) * 血小板 (PLT) * 单核细胞 (MONO))/淋巴细胞 (LYM)
+#dv <- c('VA1','VC1','VE1','zinc1','selenium1','carotenoids1',
+#        'VA2','VC2','VE2','zinc2','selenium2','carotenoids2')
+# 'VA1','VC1','VE1','zinc1','selenium1','carotenoids1'若有缺失则赋值为0
 
-dat$RAR  <- dat$RDW/dat$albumin
-# 取log
-dat$RAR_log <- log(dat$RAR )
 
-summary(dat$RAR) # 2646
+dat <- dat %>% 
+  mutate(
+    # 如果两天都有数据，取平均值；如果有任一天缺失，则为NA
+    VA = ifelse(is.na(VA1) | is.na(VA2), NA, (VA1 + VA2)/2),
+    VC = ifelse(is.na(VC1) | is.na(VC2), NA, (VC1 + VC2)/2),
+    VE = ifelse(is.na(VE1) | is.na(VE2), NA, (VE1 + VE2)/2),
+    zinc = ifelse(is.na(zinc1) | is.na(zinc2), NA, (zinc1 + zinc2)/2),
+    selenium = ifelse(is.na(selenium1) | is.na(selenium2), NA, (selenium1 + selenium2)/2),
+    carotenoids = ifelse(is.na(carotenoids1) | is.na(carotenoids2), NA, (carotenoids1 + carotenoids2)/2)  
+  )
+
+# 对6种抗氧化剂分别进行标准化
+# scale()函数会自动处理NA值，不需要特别处理
+dat <- dat %>% 
+  mutate(
+    VA_std = scale(VA)[,1],
+    VC_std = scale(VC)[,1],
+    VE_std = scale(VE)[,1],
+    zinc_std = scale(zinc)[,1],
+    selenium_std = scale(selenium)[,1],
+    carotenoids_std = scale(carotenoids)[,1],
+    
+    # 计算CDAI（所有标准化值的总和）
+    CDAI = VA_std + VC_std + VE_std + zinc_std + selenium_std + carotenoids_std
+  )
+
+# 查看结果
+summary(dat[,c("VA","VC","VE","zinc","selenium","carotenoids","CDAI")])
+
+# 删除计算CDAI过程中的中间变量
+dat <- subset(dat, select=-c(VA1,VA2,VC1,VC2,VE1,VE2,zinc1,zinc2,selenium1,selenium2,carotenoids1,carotenoids2))
 
 # 因变量----------------
-table(dat$MI,useNA = "ifany") # 1162
+table(dat$MI,useNA = "ifany") # 1
 # 1 yes
 # 2 no 
 # 7 refused
@@ -400,33 +430,9 @@ table(dat$MI,useNA = "ifany")
 
 
 # 去除多于变量
-dat <- subset(dat, select=-c(WC,EDUcation3,Neutrophils,Lymphocyte,
-                                     albumin, EDUcation2
-                                     ))
+dat <- subset(dat, select=-c(WC))
 
-
-####转换权重####
-dat <- dat %>% 
-  mutate(
-    # 处理权重
-    wt = case_when(
-      wt_LDL == 0 | is.na(wt_LDL) ~ WTMEC2YR,  # 如果LDL权重缺失或为0，使用WTMEC2YR（测试权重）
-      TRUE ~ wt_LDL  # 否则使用LDL权重
-    )
-  )
-
-dat$wt <- dat$wt/7 # 2010-2018 7个周期
-
-
-# 检查权重是否正确赋值
-summary(dat$wt)  # 查看权重的分布情况
-
-
-
-
-
-
-# 5. 数据筛选 --------------
+# 数据筛选 --------------
 
 
 # 分析样本量变化
@@ -459,7 +465,7 @@ analyze_sample_size <- function(data) {
 # 定义需要检查缺失值的变量列表
 vars_to_check <- list(
   # 自变量
-  independent = c("RAR"),
+  independent = c("CDAI"),
   
   # 协变量
   covariates = c('Age','Race','EDUcation','PIR','Gender',
@@ -495,26 +501,36 @@ clean_data <- function(data, filter_func, vars_list) {
 data_clean <- clean_data(dat, filter_conditions, vars_to_check)
 
 #检查independent变量的缺失值:
-#  RAR: 删除 2482 个缺失值, 剩余样本量 35137
+#  CDAI: 删除 7187 个缺失值, 剩余样本量 30432
 
 #检查covariates变量的缺失值:
-#  BMI: 删除 459 个缺失值, 剩余样本量 34678
-#Smoke: 删除 0 个缺失值, 剩余样本量 34678
-#Age: 删除 0 个缺失值, 剩余样本量 34678
-#Race: 删除 0 个缺失值, 剩余样本量 34678
-#EDUcation: 删除 0 个缺失值, 剩余样本量 34678
-#PIR: 删除 3048 个缺失值, 剩余样本量 31630
-#Gender: 删除 0 个缺失值, 剩余样本量 31630
-#hyptersion: 删除 0 个缺失值, 剩余样本量 31630
-#lipids: 删除 1856 个缺失值, 剩余样本量 29774
-#pa: 删除 0 个缺失值, 剩余样本量 29774
-#Stroke: 删除 0 个缺失值, 剩余样本量 29774
-#Marital: 删除 0 个缺失值, 剩余样本量 29774
-#DM: 删除 0 个缺失值, 剩余样本量 29774
+#  Age: 删除 0 个缺失值, 剩余样本量 30432
+#Race: 删除 0 个缺失值, 剩余样本量 30432
+#EDUcation: 删除 0 个缺失值, 剩余样本量 30432
+#PIR: 删除 2455 个缺失值, 剩余样本量 27977
+#Gender: 删除 0 个缺失值, 剩余样本量 27977
+#BMI: 删除 303 个缺失值, 剩余样本量 27674
+#Smoke: 删除 0 个缺失值, 剩余样本量 27674
+#hyptersion: 删除 0 个缺失值, 剩余样本量 27674
+#lipids: 删除 1690 个缺失值, 剩余样本量 25984
+#pa: 删除 0 个缺失值, 剩余样本量 25984
+#Stroke: 删除 0 个缺失值, 剩余样本量 25984
+#Marital: 删除 0 个缺失值, 剩余样本量 25984
+#DM: 删除 0 个缺失值, 剩余样本量 25984
 
 #检查dependent变量的缺失值:
-#  MI: 删除 0 个缺失值, 剩余样本量 29774
+#  MI: 删除 0 个缺失值, 剩余样本量 25984
 
+
+
+# 转换权重------------------
+# 选择适用范围最小且与分析最相关的权重
+data_clean$wt <- data_clean$wt_DR2
+data_clean$wt <- data_clean$wt/7 # 2005-2018 7个周期
+
+
+# 检查权重是否正确赋值
+summary(data_clean$wt)  # 查看权重的分布情况 
 
 
 # 保存结果
@@ -525,79 +541,82 @@ write.csv(data_clean, "cleanData.csv")
 
 
 # 特征相对于MI的基线表------------------
-library(tableone)
-# install.packages(c("flextable","officer"))
-library(flextable)
-library(officer)
-
-# 定义变量
-vars <- c("Age", "Gender", "Race", "Marital", "EDUcation", "PIR", 
-          "BMI", "Smoke", "Drink", "hyptersion", "CHD", "Stroke", "lipids","pa")
-
-# 定义分类变量
-catVars <- c("Age", "Gender", "Race", "Marital", "EDUcation", "PIR", 
-             "BMI", "Smoke", "Drink", "hyptersion", "CHD", "Stroke", "lipids","pa")
-
-# 创建Table 1
-table1 <- CreateTableOne(vars = vars, 
-                        strata = "MI",  # 按MI分组
-                        data = dat, 
-                        factorVars = catVars)
-
-# 打印表格
-print(table1, 
-      nonnormal = vars,  # 所有变量都作为分类变量处理
-      showAllLevels = TRUE,  # 显示所有水平
-      formatOptions = list(big.mark = ","))
-
-# 将表格转换为flextable格式
-table1_flex <- print(table1, 
-                    nonnormal = vars,
-                    showAllLevels = TRUE,
-                    printToggle = TRUE,
-                    formatOptions = list(big.mark = ",")) %>%
-  as.data.frame() %>%
-  rownames_to_column(var = "Characteristics") %>%
-  flextable() %>%
-  set_header_labels(
-    level = "Characteristics",
-    Overall = "Total (n = 12,689)",
-    `0` = "No (n = 10,964)",
-    `1` = "Yes (n = 1,725)",
-    test = "P value"
-  ) %>%
-  font(fontname = "Times New Roman", part = "all") %>%
-  fontsize(size = 10, part = "all") %>%
-  bold(part = "header") %>%
-  autofit() %>%
-  width(width = 1.5) %>%
-  align(align = "left", part = "all") %>%
-  align(align = "center", j = c(2:5), part = "all") %>%
-  border_outer() %>%
-  border_inner_h() %>%
-  border_inner_v()
-
-# 保存为Word文档
-doc <- read_docx()
-doc <- body_add_flextable(doc, table1_flex)
-print(doc, target = "Table1.docx")
-
-
-
-# 生成基线表------------------
-
-# 定义变量
-vars <- c("Drink", "Gender", "EDUcation", "Age", "Race", "Marital", "PIR", 
-          "BMI", "Smoke", "hyptersion", "CHD", "Stroke", "lipids","pa")
-
-# 定义分类变量
-catVars <- c("Drink", "Gender", "EDUcation", "Age", "Race", "Marital", "PIR", 
-             "BMI", "Smoke", "hyptersion", "CHD", "Stroke", "lipids","pa")
-
-# 创建Table 2
-table2 <- CreateTableOne(vars = vars, 
-                        data = dat, 
-                        factorVars = catVars)
+if(F){
+  library(tableone)
+  # install.packages(c("flextable","officer"))
+  library(flextable)
+  library(officer)
+  
+  # 定义变量
+  vars <- c("Age", "Gender", "Race", "Marital", "EDUcation", "PIR", 
+            "BMI", "Smoke", "Drink", "hyptersion", "CHD", "Stroke", "lipids","pa")
+  
+  # 定义分类变量
+  catVars <- c("Age", "Gender", "Race", "Marital", "EDUcation", "PIR", 
+               "BMI", "Smoke", "Drink", "hyptersion", "CHD", "Stroke", "lipids","pa")
+  
+  # 创建Table 1
+  table1 <- CreateTableOne(vars = vars, 
+                           strata = "MI",  # 按MI分组
+                           data = dat, 
+                           factorVars = catVars)
+  
+  # 打印表格
+  print(table1, 
+        nonnormal = vars,  # 所有变量都作为分类变量处理
+        showAllLevels = TRUE,  # 显示所有水平
+        formatOptions = list(big.mark = ","))
+  
+  # 将表格转换为flextable格式
+  table1_flex <- print(table1, 
+                       nonnormal = vars,
+                       showAllLevels = TRUE,
+                       printToggle = TRUE,
+                       formatOptions = list(big.mark = ",")) %>%
+    as.data.frame() %>%
+    rownames_to_column(var = "Characteristics") %>%
+    flextable() %>%
+    set_header_labels(
+      level = "Characteristics",
+      Overall = "Total (n = 12,689)",
+      `0` = "No (n = 10,964)",
+      `1` = "Yes (n = 1,725)",
+      test = "P value"
+    ) %>%
+    font(fontname = "Times New Roman", part = "all") %>%
+    fontsize(size = 10, part = "all") %>%
+    bold(part = "header") %>%
+    autofit() %>%
+    width(width = 1.5) %>%
+    align(align = "left", part = "all") %>%
+    align(align = "center", j = c(2:5), part = "all") %>%
+    border_outer() %>%
+    border_inner_h() %>%
+    border_inner_v()
+  
+  # 保存为Word文档
+  doc <- read_docx()
+  doc <- body_add_flextable(doc, table1_flex)
+  print(doc, target = "Table1.docx")
+  
+  
+  
+  # 生成基线表------------------
+  
+  # 定义变量
+  vars <- c("Drink", "Gender", "EDUcation", "Age", "Race", "Marital", "PIR", 
+            "BMI", "Smoke", "hyptersion", "CHD", "Stroke", "lipids","pa")
+  
+  # 定义分类变量
+  catVars <- c("Drink", "Gender", "EDUcation", "Age", "Race", "Marital", "PIR", 
+               "BMI", "Smoke", "hyptersion", "CHD", "Stroke", "lipids","pa")
+  
+  # 创建Table 2
+  table2 <- CreateTableOne(vars = vars, 
+                           data = dat, 
+                           factorVars = catVars)
+  
+}
 
 
 

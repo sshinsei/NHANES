@@ -19,6 +19,9 @@ extract_regression_results <- function(model, model_name) {
     return(NULL)
   }
   
+  # 只保留前4行
+  coef_lines <- head(coef_lines, 3)
+  
   # 创建数据框
   coef_df <- data.frame(
     do.call(rbind, strsplit(trimws(coef_lines), "\\s+"))
