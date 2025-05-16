@@ -58,6 +58,52 @@ extract_regression_results <- function(model, model_name) {
 
 
 
+#### __________创建RCS模型拟合函数__________ ##############
+fit_rcs_model <- function(exposure_var, knots, study_design, covariates) {
+  formula_str <- paste0("status~rcs(", exposure_var, ",", knots, ")+", paste(covariates, collapse = "+"))
+  fit <- svyglm(formula_str, study_design, family = quasibinomial)
+  
+  data <- fit$survey.design$variables
+  ori.weight <- 1/(study_design$prob)
+  mean.weight <- mean(ori.weight)
+  data$weights <- ori.weight/mean.weight
+  
+  # 设置datadist
+  dd <- datadist(data)
+  assign("dd", dd, envir = .GlobalEnv)  # 将dd保存到全局环境
+  options(datadist="dd")
+  
+  fit.rcs <- Glm(formula = formula(formula_str), 
+                 data = data, 
+                 family = "quasibinomial", 
+                 weights = weights)
+  
+  return(fit.rcs)
+}
+
+
+
+##### __________找到OR=1的index值（使用3结点模型）__________ ###########
+find_or_1 <- function(OR_data) {
+  # 找到OR跨过1的位置
+  idx <- which(diff(sign(OR_data$yhat - 1)) != 0)
+  
+  if(length(idx) > 0) {
+    # 使用线性插值找到精确的x值
+    x1 <- OR_data$index[idx]
+    x2 <- OR_data$index[idx + 1]
+    y1 <- OR_data$yhat[idx]
+    y2 <- OR_data$yhat[idx + 1]
+    
+    # 线性插值公式：x = x1 + (1 - y1)*(x2 - x1)/(y2 - y1)
+    x_intercept <- x1 + (1 - y1) * (x2 - x1)/(y2 - y1)
+    return(x_intercept)
+  } else {
+    return(NA)
+  }
+}
+
+
 #### __________阈值效应分析__________ ####
 weighted_segmented_regression_nhanes <- function(data, 
                                                  y_var,           

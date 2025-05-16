@@ -38,7 +38,7 @@ DEMO_F$Year <- "2009-2010"
 DEMO_G$Year <- "2011-2012"
 DEMO_H$Year <- "2013-2014"
 DEMO_I$Year <- "2015-2016"
-DEMO_J$Year <- "2017-2018"
+# DEMO_J$Year <- "2017-2018"
 
 #权重数据提取
 wt_dat <- rbind(DEMO_D[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
@@ -46,8 +46,8 @@ wt_dat <- rbind(DEMO_D[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
                 DEMO_F[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
                 DEMO_G[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
                 DEMO_H[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
-                DEMO_I[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")],
-                DEMO_J[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")]
+                DEMO_I[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")]
+                # DEMO_J[,c("SEQN","SDMVSTRA","WTMEC2YR","SDMVPSU","Year")]
                 )
 
 #人口学特征提取， 变量名一样，直接合并，性别，年龄，种族，教育程度，婚姻，家庭经济贫困
@@ -56,8 +56,8 @@ DEMO <- rbind(DEMO_D[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDE
               DEMO_F[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
               DEMO_G[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
               DEMO_H[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
-              DEMO_I[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")],
-              DEMO_J[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")]
+              DEMO_I[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")]
+              # DEMO_J[,c("SEQN","RIAGENDR","RIDAGEYR","RIDRETH1","DMDEDUC3","DMDEDUC2","DMDMARTL","INDFMPIR")]
               ) 
 
 #对变量进行重命名
@@ -85,13 +85,15 @@ for(i in seq_along(files)){
 }
 
 
+
+
 DR1 <- rbind(DR1TOT_D[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
               DR1TOT_E[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
               DR1TOT_F[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
               DR1TOT_G[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
               DR1TOT_H[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
-              DR1TOT_I[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")],
-              DR1TOT_J[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")]
+              DR1TOT_I[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")]
+              # DR1TOT_J[,c("SEQN","DR1TVARA","DR1TVC","DR1TATOC","DR1TZINC","DR1TSELE","DR1TBCAR","WTDRD1")]
 ) 
 
 DR1_dat <- rename(.data=DR1,
@@ -110,8 +112,8 @@ DR2 <- rbind(DR2TOT_D[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TS
              DR2TOT_F[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")],
              DR2TOT_G[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")],
              DR2TOT_H[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")],
-             DR2TOT_I[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")],
-             DR2TOT_J[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")]
+             DR2TOT_I[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")]
+             # DR2TOT_J[,c("SEQN","DR2TVARA","DR2TVC","DR2TATOC","DR2TZINC","DR2TSELE","DR2TBCAR","WTDR2D")]
 ) 
 
 DR2_dat <- rename(.data=DR2,
@@ -127,7 +129,7 @@ DR2_dat <- rename(.data=DR2,
 
 # 3. 其他协变量--------------------
 
-## -------------淋巴细胞 中性粒细胞 血小板 单核细胞 红细胞分布宽度-------------
+## -------------淋巴细胞计数 中性粒细胞计数 血小板计数 单核细胞计数 红细胞分布宽度-------------
 files <- list.files(pattern=".*_CBC_.*", recursive=TRUE)
 cat("找到", length(files), "个文件\n")
 
@@ -139,13 +141,13 @@ for(i in seq_along(files)){
   assign(varname, read.xport(file.path(file)))
 }
 
-exam <- rbind(CBC_D[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
-              CBC_E[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
-              CBC_F[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
-              CBC_G[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
-              CBC_H[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
-              CBC_I[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")],
-              CBC_J[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW")]
+exam <- rbind(CBC_D[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW","LBXNEPCT")],
+              CBC_E[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW","LBXNEPCT")],
+              CBC_F[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW","LBXNEPCT")],
+              CBC_G[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW","LBXNEPCT")],
+              CBC_H[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW","LBXNEPCT")],
+              CBC_I[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW","LBXNEPCT")]
+              # CBC_J[,c("SEQN","LBDNENO","LBDLYMNO","LBDMONO","LBXPLTSI","LBXRDW","LBXNEPCT")]
 ) 
 
 exam_dat <- rename(.data=exam,
@@ -168,17 +170,18 @@ for(i in seq_along(files)){
   assign(varname, read.xport(file.path(file)))
 }
 
-wp <- rbind(BIOPRO_D[,c("SEQN","LBDSALSI")],
-            BIOPRO_E[,c("SEQN","LBDSALSI")],
-            BIOPRO_F[,c("SEQN","LBDSALSI")],
-            BIOPRO_G[,c("SEQN","LBDSALSI")],
-            BIOPRO_H[,c("SEQN","LBDSALSI")],
-            BIOPRO_I[,c("SEQN","LBDSALSI")],
-            BIOPRO_J[,c("SEQN","LBDSALSI")]
+wp <- rbind(BIOPRO_D[,c("SEQN","LBXSAL","LBXSGB")],
+            BIOPRO_E[,c("SEQN","LBXSAL","LBXSGB")],
+            BIOPRO_F[,c("SEQN","LBXSAL","LBXSGB")],
+            BIOPRO_G[,c("SEQN","LBXSAL","LBXSGB")],
+            BIOPRO_H[,c("SEQN","LBXSAL","LBXSGB")],
+            BIOPRO_I[,c("SEQN","LBXSAL","LBXSGB")]
+            # BIOPRO_J[,c("SEQN","LBXSAL","LBXSGB")]
 ) 
 
 wp_dat <- rename(.data=wp,
-                 albumin =LBDSALSI #白蛋白
+                 albumin = LBXSAL, # 白蛋白 g/dl
+                 globulin = LBXSGB # 球蛋白 g/dl
 ) 
 
 ## -------------C反应蛋白-------------
@@ -231,8 +234,8 @@ ALQ <- rbind(ALQ_D[,c("SEQN","ALQ101")],
              ALQ_F[,c("SEQN","ALQ101")],
              ALQ_G[,c("SEQN","ALQ101")],
              ALQ_H[,c("SEQN","ALQ101")],
-             ALQ_I[,c("SEQN","ALQ101")],
-             ALQ_J[,c("SEQN","ALQ101")]
+             ALQ_I[,c("SEQN","ALQ101")]
+             # ALQ_J[,c("SEQN","ALQ101")]
 ) 
 
 ALQ_dat <- rename(.data=ALQ,
@@ -256,8 +259,8 @@ SMQ <- rbind(SMQ_D[,c("SEQN","SMQ020","SMQ040")],
              SMQ_F[,c("SEQN","SMQ020","SMQ040")],
              SMQ_G[,c("SEQN","SMQ020","SMQ040")],
              SMQ_H[,c("SEQN","SMQ020","SMQ040")],
-             SMQ_I[,c("SEQN","SMQ020","SMQ040")],
-             SMQ_J[,c("SEQN","SMQ020","SMQ040")]
+             SMQ_I[,c("SEQN","SMQ020","SMQ040")]
+             # SMQ_J[,c("SEQN","SMQ020","SMQ040")]
 ) 
 
 SMQ_dat <- rename(.data=SMQ,Smoke_history=SMQ020,smoke_now=SMQ040)
@@ -275,16 +278,16 @@ for(i in seq_along(files)){
   assign(varname, read.xport(file.path(file)))
 }
 
-BMI <- rbind(BMX_D[,c("SEQN","BMXBMI","BMXWAIST")],
-             BMX_E[,c("SEQN","BMXBMI","BMXWAIST")],
-             BMX_F[,c("SEQN","BMXBMI","BMXWAIST")],
-             BMX_G[,c("SEQN","BMXBMI","BMXWAIST")],
-             BMX_H[,c("SEQN","BMXBMI","BMXWAIST")],
-             BMX_I[,c("SEQN","BMXBMI","BMXWAIST")],
-             BMX_J[,c("SEQN","BMXBMI","BMXWAIST")]
+BMI <- rbind(BMX_D[,c("SEQN","BMXBMI","BMXWAIST","BMXHT")],
+             BMX_E[,c("SEQN","BMXBMI","BMXWAIST","BMXHT")],
+             BMX_F[,c("SEQN","BMXBMI","BMXWAIST","BMXHT")],
+             BMX_G[,c("SEQN","BMXBMI","BMXWAIST","BMXHT")],
+             BMX_H[,c("SEQN","BMXBMI","BMXWAIST","BMXHT")],
+             BMX_I[,c("SEQN","BMXBMI","BMXWAIST","BMXHT")]
+             # BMX_J[,c("SEQN","BMXBMI","BMXWAIST","BMXHT")]
 ) 
 
-BMI_dat <- rename(.data=BMI, BMI=BMXBMI, WC=BMXWAIST)
+BMI_dat <- rename(.data=BMI, BMI=BMXBMI, WC=BMXWAIST, height=BMXHT)
 
 
 ## --------------身体活动水平-------------------
@@ -306,8 +309,8 @@ PAQ <- rbind(PAQ_D[,c("SEQN","PAQ650","PAQ665")],
              PAQ_F[,c("SEQN","PAQ650","PAQ665")],
              PAQ_G[,c("SEQN","PAQ650","PAQ665")],
              PAQ_H[,c("SEQN","PAQ650","PAQ665")],
-             PAQ_I[,c("SEQN","PAQ650","PAQ665")],
-             PAQ_J[,c("SEQN","PAQ650","PAQ665")]
+             PAQ_I[,c("SEQN","PAQ650","PAQ665")]
+             # PAQ_J[,c("SEQN","PAQ650","PAQ665")]
 ) 
 
 PAQ_dat <- rename(.data=PAQ,med=PAQ665,high=PAQ650)   
@@ -330,8 +333,8 @@ BPQ <- rbind(BPQ_D[,c("SEQN","BPQ020","BPQ080")],
              BPQ_F[,c("SEQN","BPQ020","BPQ080")],
              BPQ_G[,c("SEQN","BPQ020","BPQ080")],
              BPQ_H[,c("SEQN","BPQ020","BPQ080")],
-             BPQ_I[,c("SEQN","BPQ020","BPQ080")],
-             BPQ_J[,c("SEQN","BPQ020","BPQ080")]
+             BPQ_I[,c("SEQN","BPQ020","BPQ080")]
+             # BPQ_J[,c("SEQN","BPQ020","BPQ080")]
 ) 
 
 BPQ_dat <- rename(.data=BPQ, hypter=BPQ020,cholesterol=BPQ080)
@@ -344,8 +347,8 @@ BPX <- rbind(BPX_D[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI
              BPX_F[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")],
              BPX_G[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")],
              BPX_H[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")],
-             BPX_I[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")],
-             BPX_J[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")]
+             BPX_I[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")]
+             # BPX_J[,c("SEQN","BPXSY1","BPXSY2","BPXSY3","BPXSY4","BPXDI1","BPXDI2","BPXDI3","BPXDI4")]
 ) 
 
 BPX_dat <- BPX
@@ -368,24 +371,27 @@ TCHOL <- rbind(TCHOL_D[,c("SEQN","LBDTCSI","LBXTC")],
                TCHOL_F[,c("SEQN","LBDTCSI","LBXTC")],
                TCHOL_G[,c("SEQN","LBDTCSI","LBXTC")],
                TCHOL_H[,c("SEQN","LBDTCSI","LBXTC")],
-               TCHOL_I[,c("SEQN","LBDTCSI","LBXTC")],
-               TCHOL_J[,c("SEQN","LBDTCSI","LBXTC")]
+               TCHOL_I[,c("SEQN","LBDTCSI","LBXTC")]
+               #TCHOL_J[,c("SEQN","LBDTCSI","LBXTC")]
 ) 
 
 TCHOL_dat <- rename(.data=TCHOL, TC_mmol=LBDTCSI, TC_mg=LBXTC)
 
 
-####_________TG_________####
-TG <- rbind(BIOPRO_D[,c("SEQN","LBDSTRSI","LBXSTR")],
-               BIOPRO_E[,c("SEQN","LBDSTRSI","LBXSTR")],
-               BIOPRO_F[,c("SEQN","LBDSTRSI","LBXSTR")],
-               BIOPRO_G[,c("SEQN","LBDSTRSI","LBXSTR")],
-               BIOPRO_H[,c("SEQN","LBDSTRSI","LBXSTR")],
-               BIOPRO_I[,c("SEQN","LBDSTRSI","LBXSTR")],
-               BIOPRO_J[,c("SEQN","LBDSTRSI","LBXSTR")]
+####_________TG 尿酸(mg/dl)_________####
+BIOPRO <- rbind(
+               BIOPRO_D[,c("SEQN","LBDSTRSI","LBXSTR","LBXSUA","LBDSBUSI","LBDSCRSI")],
+               BIOPRO_E[,c("SEQN","LBDSTRSI","LBXSTR","LBXSUA","LBDSBUSI","LBDSCRSI")],
+               BIOPRO_F[,c("SEQN","LBDSTRSI","LBXSTR","LBXSUA","LBDSBUSI","LBDSCRSI")],
+               BIOPRO_G[,c("SEQN","LBDSTRSI","LBXSTR","LBXSUA","LBDSBUSI","LBDSCRSI")],
+               BIOPRO_H[,c("SEQN","LBDSTRSI","LBXSTR","LBXSUA","LBDSBUSI","LBDSCRSI")],
+               BIOPRO_I[,c("SEQN","LBDSTRSI","LBXSTR","LBXSUA","LBDSBUSI","LBDSCRSI")]
+               #BIOPRO_J[,c("SEQN","LBDSTRSI","LBXSTR","LBXSUA","LBDSBUSI","LBDSCRSI")]
 ) 
+BIOPRO$LBDSCRSI <- BIOPRO$LBDSCRSI/1000 # 转为mmol/L
 
-TG_dat <- rename(.data=TG,TG_mmol=LBDSTRSI,TG_mg=LBXSTR)
+BIOPRO_dat <- rename(.data=BIOPRO,TG_mmol=LBDSTRSI,TG_mg=LBXSTR,UA_mg=LBXSUA,
+                      CR_mmol=LBDSCRSI,BUN_mmol=LBDSBUSI)
 
 ####_________HDL_________####
 HDL <- rbind(HDL_D[,c("SEQN","LBDHDDSI","LBDHDD")],
@@ -393,11 +399,12 @@ HDL <- rbind(HDL_D[,c("SEQN","LBDHDDSI","LBDHDD")],
              HDL_F[,c("SEQN","LBDHDDSI","LBDHDD")],
              HDL_G[,c("SEQN","LBDHDDSI","LBDHDD")],
              HDL_H[,c("SEQN","LBDHDDSI","LBDHDD")],
-             HDL_I[,c("SEQN","LBDHDDSI","LBDHDD")],
-             HDL_J[,c("SEQN","LBDHDDSI","LBDHDD")]
+             HDL_I[,c("SEQN","LBDHDDSI","LBDHDD")]
+             #HDL_J[,c("SEQN","LBDHDDSI","LBDHDD")]
 ) 
 
 HDL_dat <- rename(.data=HDL,HDL_mmol=LBDHDDSI,HDL_mg=LBDHDD)
+
 
 ####__________LDL__________####
 LDL <- rbind(TRIGLY_D[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")],
@@ -405,8 +412,8 @@ LDL <- rbind(TRIGLY_D[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI"
              TRIGLY_F[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")],
              TRIGLY_G[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")],
              TRIGLY_H[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")],
-             TRIGLY_I[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")],
-             TRIGLY_J[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")]
+             TRIGLY_I[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")]
+             #TRIGLY_J[,c("SEQN","WTSAF2YR","LBDLDLSI","LBDLDL","LBXTR","LBDTRSI")]
 ) 
 
 LDL_dat <- rename(.data=LDL,LDL_mmol=LBDLDLSI,LDL_mg=LBDLDL,
@@ -449,8 +456,8 @@ DIQ <- rbind(DIQ_D[,c("SEQN","DIQ010","DIQ050","DID070")],
              DIQ_F[,c("SEQN","DIQ010","DIQ050","DID070")],
              DIQ_G[,c("SEQN","DIQ010","DIQ050","DID070")],
              DIQ_H[,c("SEQN","DIQ010","DIQ050","DID070")],
-             DIQ_I[,c("SEQN","DIQ010","DIQ050","DID070")],
-             DIQ_J[,c("SEQN","DIQ010","DIQ050","DID070")]
+             DIQ_I[,c("SEQN","DIQ010","DIQ050","DID070")]
+             #DIQ_J[,c("SEQN","DIQ010","DIQ050","DID070")]
 ) 
 
 DIQ_dat <- rename(.data=DIQ, Diabetes1=DIQ010,#医生告诉你有糖尿病
@@ -463,8 +470,8 @@ GHB <- rbind(GHB_D[,c("SEQN","LBXGH")],
              GHB_F[,c("SEQN","LBXGH")],
              GHB_G[,c("SEQN","LBXGH")],
              GHB_H[,c("SEQN","LBXGH")],
-             GHB_I[,c("SEQN","LBXGH")],
-             GHB_J[,c("SEQN","LBXGH")]
+             GHB_I[,c("SEQN","LBXGH")]
+             #GHB_J[,c("SEQN","LBXGH")]
 ) 
 
 GHB_dat <- rename(.data=GHB,Glycohemoglobin=LBXGH) 
@@ -474,8 +481,8 @@ GLU <- rbind(GLU_D[,c("SEQN","LBXGLU","WTSAF2YR")],
              GLU_F[,c("SEQN","LBXGLU","WTSAF2YR")], # 子样本权重
              GLU_G[,c("SEQN","LBXGLU","WTSAF2YR")],
              GLU_H[,c("SEQN","LBXGLU","WTSAF2YR")],
-             GLU_I[,c("SEQN","LBXGLU","WTSAF2YR")],
-             GLU_J[,c("SEQN","LBXGLU","WTSAF2YR")]
+             GLU_I[,c("SEQN","LBXGLU","WTSAF2YR")]
+             #GLU_J[,c("SEQN","LBXGLU","WTSAF2YR")]
 ) 
 
 GLU_dat <- rename(.data=GLU,Glucose=LBXGLU,wt_glu=WTSAF2YR) 
@@ -504,8 +511,8 @@ MCQ <- rbind(MCQ_D[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")],
              MCQ_F[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")],
              MCQ_G[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")],
              MCQ_H[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")],
-             MCQ_I[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")],
-             MCQ_J[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")]
+             MCQ_I[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")]
+             #MCQ_J[,c("SEQN","MCQ160C","MCQ160E", "MCQ160F")]
 ) 
 
 MCQ_dat <- rename(.data=MCQ, CHD=MCQ160C, MI=MCQ160E, Stroke=MCQ160F) 
@@ -530,8 +537,8 @@ RHQ <- rbind(RHQ_D[,c("SEQN","RHD143","RHQ200")],
              RHQ_F[,c("SEQN","RHD143","RHQ200")],
              RHQ_G[,c("SEQN","RHD143","RHQ200")],
              RHQ_H[,c("SEQN","RHD143","RHQ200")],
-             RHQ_I[,c("SEQN","RHD143","RHQ200")],
-             RHQ_J[,c("SEQN","RHD143","RHQ200")]
+             RHQ_I[,c("SEQN","RHD143","RHQ200")]
+             #RHQ_J[,c("SEQN","RHD143","RHQ200")]
             )
 
 RHQ_dat <- rename(.data=RHQ,
@@ -559,7 +566,7 @@ if(F){
 
 ###### another method to merge  #########
 dat_names <- ls(pattern = "_dat$")
-dat_names <- dat_names[! dat_names %in% c("CRP_dat", "wp_dat", "wt_dat", "exam_dat")]
+dat_names <- dat_names[! dat_names %in% c("CRP_dat", "wt_dat")]
 dat_list <- lapply(dat_names, get)
 
 # 合并前去除重复列
@@ -571,9 +578,11 @@ for (i in 2:length(dat_list)) {
   }
 }
 
-merged_dat <- Reduce(function(x, y) merge(x, y, by = "SEQN", all.x = TRUE), dat_list)
-dim(merged_dat)
-# [1] 39346    57
+# 使用full_join保留所有数据
+merged_dat <- Reduce(function(x, y) full_join(x, y, by = "SEQN"), dat_list)
 
+
+dim(merged_dat)
+# [1] 70190    77
 
 write.csv(merged_dat, "mergeData.csv", row.names = FALSE)

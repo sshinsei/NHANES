@@ -1,4 +1,2 @@
 "Variable","Estimate","Std. Error","t value","Pr(>|t|)","NA","OR","lower","upper"
-"RAR_log_T",0.5272,0.0548,"9.63","1.3e-15","***",1.694,1.522,1.886
-NA,NA,NA,NA,NA,NA,NA,NA,NA
-NA,NA,NA,NA,NA,NA,NA,NA,NA
+"index_log_T",0.2723,0.0353,"7.71","1.4e-11","***",1.313,1.225,1.407
