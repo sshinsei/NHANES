@@ -8,7 +8,7 @@ library(forestplot)
 library(rms)
 library(ggplot2)
 library(plotRCS)
-
+library(mgcv) # 平滑曲线
 # load functions
 source("../functions.R")
 
@@ -117,7 +117,8 @@ results_mod2 <- extract_regression_results(mod2, "model2")
 ## ----------------- 协变量: 模型3调整此处---------------------- 
 covariates = c(                
   "Age", "Race", "EDUcation", "PIR", "Gender", 
-  "Smoke", "pa","Drink","Marital"
+  "Smoke", "pa","Drink","Marital","BMI",
+  "Hypertension","Diabetes"
 )
 
 mod3 <- svyglm(as.formula(
@@ -203,41 +204,115 @@ results_Cmod3 <- extract_regression_results(Cmod3, "Cmodel3")
 
 # -------------- 2. 平滑曲线拟合图 -----------------
 ## 使用全调整模型进行平滑曲线拟合
+## 最好不要用这个，拟合的曲线没有加权，使用的是ggplot自己的拟合方式
+# study_design <- svydesign(data=new_dat, 
+#                           id=~SDMVPSU, 
+#                           strata=~SDMVSTRA, 
+#                           weights=~wt, nest=TRUE)
+# 
+# # 模型用到的所有自变量
+# model_vars <- c("index_log", "Age", "Race", "EDUcation", 
+#                 "PIR", "Gender", "BMI", "Smoke", "Diabetes",
+#                 "Hypertension", "Stroke","Marital","pa")
+# 
+# # 检查每个变量的缺失情况
+# sapply(new_dat[, model_vars], function(x) sum(is.na(x)))
+# 
+# # 全调整模型
+# model <- svyglm(as.formula(
+#   paste0("status~index_log+",paste(covariates, collapse = " + "))), 
+#                    study_design,family = quasibinomial)
+# 
+# # 预测概率
+# new_dat$predicted_prob <- predict(model, newdata = new_dat, type = "response")
+# 
+# 
+# 
+# # 绘制平滑曲线
+# ggplot(new_dat, aes(x = index_log, y = predicted_prob)) +
+#   geom_smooth(se = TRUE, color = "blue") + # method = "gam", 
+#   labs(x = "index_log", y = "forcasted probe", 
+#        title = "") +
+#   theme_bw()+
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank())
+# 
+# ggsave("smooth_plot.png", width = 8, height = 6, dpi = 300)
+# ggsave("smooth_plot.pdf", width = 8, height = 6, dpi = 300)
 
-study_design <- svydesign(data=new_dat, 
-                          id=~SDMVPSU, 
-                          strata=~SDMVSTRA, 
-                          weights=~wt, nest=TRUE)
-
-# 模型用到的所有自变量
-model_vars <- c("index_log", "Age", "Race", "EDUcation", 
-                "PIR", "Gender", "BMI", "Smoke", "Diabetes",
-                "hyptersion", "Stroke","Marital","pa")
-
-# 检查每个变量的缺失情况
-sapply(new_dat[, model_vars], function(x) sum(is.na(x)))
-
-# 全调整模型
-mod3 <- svyglm(as.formula(
-  paste0("status~index_log+",paste(covariates, collapse = " + "))), 
-                   study_design,family = quasibinomial)
-
-# 预测概率
-new_dat$predicted_prob <- predict(mod3, newdata = new_dat, type = "response")
 
 
+######## __________构建GAM模型_________ #########
+gam_model <- gam(formula = as.formula(
+                            paste0("status ~ s(index_log, k = 3) + ", 
+                            paste(covariates, collapse = " + "))),
+                 data = new_dat,
+                 weights = wt,
+                 family = quasibinomial)
 
-# 绘制平滑曲线
-ggplot(new_dat, aes(x = index_log, y = predicted_prob)) +
-  geom_smooth(se = TRUE, color = "blue") + # method = "loess", 
-  labs(x = "index_log", y = "forcasted probe", 
-       title = "") +
-  theme_bw()+
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
+# 1. 生成等距预测点
+x_seq <- seq(min(new_dat$index_log, na.rm=TRUE),
+             max(new_dat$index_log, na.rm=TRUE),
+             length.out = 200)
 
-ggsave("smooth_plot.png", width = 8, height = 6, dpi = 300)
-ggsave("smooth_plot.pdf", width = 8, height = 6, dpi = 300)
+# 2. 构造预测数据框（协变量用均值/众数/参考水平）
+newdata_pred <- new_dat[1, , drop=FALSE]
+for (v in covariates) {
+  if (is.numeric(new_dat[[v]])) {
+    newdata_pred[[v]] <- mean(new_dat[[v]], na.rm=TRUE)
+  } else {
+    newdata_pred[[v]] <- as.character(stats::na.omit(new_dat[[v]])[1])
+  }
+}
+newdata_pred <- newdata_pred[rep(1, length(x_seq)), ]
+newdata_pred$index_log <- x_seq
+
+# 3. 预测
+pred <- predict(gam_model, newdata = newdata_pred, type = "link", se.fit = TRUE)
+fit <- pred$fit
+se <- pred$se.fit
+fit_low <- fit - 1.96 * se
+fit_high <- fit + 1.96 * se
+
+# 4. 转换为概率
+prob <- plogis(fit)
+prob_low <- plogis(fit_low)
+prob_high <- plogis(fit_high)
+
+# 5. 画图
+ymax <- max(prob_high, na.rm = TRUE)
+ymin <- min(prob_low, na.rm = TRUE)
+# 适当留白
+ymax <- min(1, ymax * 1.05)
+ymin <- max(0, ymin * 0.95)
+
+# 画图
+png("smooth_plot_gam.png", width = 720, height = 560)
+par(mar = c(5, 5, 4, 2))
+plot(x_seq, prob, type = "l", col = "blue", lwd = 2,
+     ylim = c(ymin, ymax), xlab = "index_log", ylab = "Predicted Probability",
+     main = "GAM Smooth Curve")
+lines(x_seq, prob_low, col = "red", lty = 2)
+lines(x_seq, prob_high, col = "red", lty = 2)
+legend("topright", legend = c("Fitted curve", "95% CI"),
+       col = c("blue", "red"), lty = c(1, 2), lwd = c(2, 1), bty = "n")
+dev.off()
+
+# PDF同理
+pdf("smooth_plot_gam.pdf", width = 8, height = 6)
+par(mar = c(5, 5, 4, 2))
+plot(x_seq, prob, type = "l", col = "blue", lwd = 2,
+     ylim = c(ymin, ymax), xlab = "index_log", ylab = "Predicted Probability",
+     main = "GAM Smooth Curve")
+lines(x_seq, prob_low, col = "red", lty = 2)
+lines(x_seq, prob_high, col = "red", lty = 2)
+legend("topright", legend = c("Fitted curve", "95% CI"),
+       col = c("blue", "red"), lty = c(1, 2), lwd = c(2, 1), bty = "n")
+dev.off()
+
+# 输出模型诊断信息
+summary(gam_model)
+
 
 
 # -------------- 3. RCS分析 -----------------
@@ -339,10 +414,10 @@ p1 <- ggplot() +
               alpha=0.1, fill="grey") +
   geom_hline(yintercept=1, linetype=2, color="grey") +
   geom_vline(xintercept=or1_point3, linetype=2, color="red") +
-  geom_text(aes(x=or1_point3+1,y=2.25,
-                label = paste0("p for nonlinear = ",round(nonlin_test[2,"P"], 4))))+
   geom_text(aes(x=or1_point3+1,y=2,
-                label = paste0("p for all = ",
+                label = paste0("p for nonlinear: ",round(nonlin_test[2,"P"], 4))))+
+  geom_text(aes(x=or1_point3+1,y=2.25,
+                label = paste0("p for all: ",
                                ifelse(round(nonlin_test[ncol(nonlin_test),"P"], 4) == 0,
                                       "p<0.0001",round(nonlin_test[ncol(nonlin_test),"P"], 4)))))+
   labs(x = "index_log", y = "OR (95% CI)") +
@@ -392,22 +467,22 @@ ggsave("segmented_regression_plot.pdf", p2, width = 8, height = 6, dpi = 300)
 
 ##### ________平滑曲线添加拐点画图___________ #######
 
-p3 <- ggplot(new_dat, aes(x = index_log, y = predicted_prob)) +
-  geom_smooth(method = "loess", se = TRUE, color = "blue") +
-  labs(x = "index_log", y = "forcasted probe",
-       title = "") +
-  geom_vline(xintercept = result$cutpoint, # or1_point3
-             linetype = "dashed",
-             color = "red",
-             alpha = 0.5) +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
-  
-p3
-# 保存图形
-ggsave("smooth_threshold.pdf", p3, width = 8, height = 6, dpi = 300)
-ggsave("smooth_threshold.png", p3, width = 8, height = 6, dpi = 300)
+# p3 <- ggplot(new_dat, aes(x = index_log, y = predicted_prob)) +
+#   geom_smooth(se = TRUE, color = "blue") +
+#   labs(x = "index_log", y = "forcasted probe",
+#        title = "") +
+#   geom_vline(xintercept = result$cutpoint, # or1_point3
+#              linetype = "dashed",
+#              color = "red",
+#              alpha = 0.5) +
+#   theme_bw() +
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank())
+#   
+# p3
+# # 保存图形
+# ggsave("smooth_threshold.pdf", p3, width = 8, height = 6, dpi = 300)
+# ggsave("smooth_threshold.png", p3, width = 8, height = 6, dpi = 300)
 
 
 
@@ -553,11 +628,23 @@ PIR_results <- perform_subgroup_analysis(
   )
 )
 
-
+##### __________ Hypertension 亚组分析__________ #####
+Hypertension_results <- perform_subgroup_analysis(
+  data = new_dat,
+  group_var = "Hypertension",           # 分组变量：性别
+  outcome_vars = "status",        # 因变量：疾病状态
+  exposure_vars = "index_log",      # 自变量：对数转换后的index_log
+  covariates = covariates,
+  design_vars = c(                # 复杂抽样设计变量
+    id = "SDMVPSU", 
+    strata = "SDMVSTRA", 
+    weights = "wt"
+  )
+)
 
 # bind datas 
-data2plot <- rbind(age_results,gender_results,RACE_results,PA_results,
-                  Smoke_results, Drink_results)
+data2plot <- rbind(age_results,gender_results,RACE_results,BMI_results,
+                   PA_results,Hypertension_results, Diabetes_results)
 # view(data2plot)
 
 # 处理数据并绘图,函数返回的只有森林图的信息
@@ -636,7 +723,7 @@ format_regression_table <- function(continuous_models, quartile_models, trend_mo
   
   # 添加连续变量结果
   continuous_row <- data.frame(
-    METS_VF = "Continuous",
+    Index = "Continuous",
     Model1 = get_model_stats(Cmod1, "index_log"),
     Model2 = get_model_stats(Cmod2, "index_log"),
     Model3 = get_model_stats(Cmod3, "index_log")
@@ -649,7 +736,7 @@ format_regression_table <- function(continuous_models, quartile_models, trend_mo
   
   # 添加四分位数分组结果
   quartile_rows <- data.frame(
-    METS_VF = c("Interquartile",
+    Index = c("Interquartile",
                 paste("Q1\n", q_ranges[1]),
                 paste("Q2\n", q_ranges[2]),
                 paste("Q3\n", q_ranges[3]),
@@ -670,7 +757,7 @@ format_regression_table <- function(continuous_models, quartile_models, trend_mo
   
   # 添加趋势性检验结果
   trend_row <- data.frame(
-    METS_VF = "P for trend",
+    Index = "P for trend",
     Model1 = get_model_stats(Tmod1, "index_log_T"),
     Model2 = get_model_stats(Tmod2, "index_log_T"),
     Model3 = get_model_stats(Tmod3, "index_log_T")
@@ -730,3 +817,4 @@ regression_table <- format_regression_table(
 
 # 打印表格
 print(regression_table)
+

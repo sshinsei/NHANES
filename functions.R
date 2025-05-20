@@ -4,6 +4,7 @@ library(dplyr)
 library(ggplot2)
 library(knitr)
 library(rms)
+library(mgcv)
 
 #### __________定义提取回归结果的函数__________ ####
 extract_regression_results <- function(model, model_name) {
@@ -112,14 +113,7 @@ weighted_segmented_regression_nhanes <- function(data,
                                                  weight_var = "WTMEC2YR",
                                                  strata_var = "SDMVSTRA",
                                                  psu_var = "SDMVPSU") {
-  # 1. 构建加权设计
-  design <- svydesign(
-    id = as.formula(paste0("~", psu_var)),
-    strata = as.formula(paste0("~", strata_var)),
-    weights = as.formula(paste0("~", weight_var)),
-    nest = TRUE,
-    data = data
-  )
+  
   
   # 构建协变量公式部分
   if(length(covariates) > 0) {
@@ -144,8 +138,15 @@ weighted_segmented_regression_nhanes <- function(data,
       full_formula <- paste(y_var, "~ x_split")
     }
     
-    model_tmp <- svyglm(as.formula(full_formula), design = design_tmp)
-    return(list(logLik = as.numeric(logLik(model_tmp)), model = model_tmp))
+    model_tmp <- gam(as.formula(full_formula), data = data,
+                 weights = weights,
+                 family = quasibinomial)
+    logLik_value <- as.numeric(logLik(model_tmp))
+    # 添加数值稳定性处理
+    if(is.infinite(logLik_value)) {
+      logLik_value <- sign(logLik_value) * .Machine$double.xmax
+    }
+    return(list(logLik = logLik_value, model = model_tmp))
   }
   
   # Step 1: 初筛5%-95%之间，每隔5%
@@ -201,7 +202,9 @@ weighted_segmented_regression_nhanes <- function(data,
   }
   
   # 拟合最终模型
-  final_model <- svyglm(as.formula(formula_str), design = design, family = quasibinomial())
+  final_model <- gam(as.formula(formula_str), data = data,
+                 weights = weights,
+                 family = quasibinomial)
   
   # 提取结果并计算OR
   coef_summary <- summary(final_model)$coefficients
@@ -220,7 +223,7 @@ weighted_segmented_regression_nhanes <- function(data,
               exp(coef_summary["x_above", "Estimate"]),
               exp(coef_summary["x_above", "Estimate"] - 1.96 * coef_summary["x_above", "Std. Error"]),
               exp(coef_summary["x_above", "Estimate"] + 1.96 * coef_summary["x_above", "Std. Error"])),
-      sprintf("%.3f", logLik(final_model)[1])
+      sprintf("%.3f", logLik(final_model)[1] / nrow(data))
     ),
     "P-value" = c(
       sprintf("%.3f", coef_summary["x_below", "Pr(>|t|)"]),
@@ -233,6 +236,9 @@ weighted_segmented_regression_nhanes <- function(data,
   print(knitr::kable(results_table, 
                      format = "pipe",
                      caption = "Threshold effect analysis by the two-piecewise linear regression"))
+  
+  # 对log-likelihood进行标准化
+  normalized_loglik <- logLik(final_model) / nrow(data)
   
   return(list(
     table = results_table,
